@@ -1,5 +1,11 @@
 {
   "name": "gardener",
-  "description": "Helps you write scripts that can be publised on Garden-AI",
-  "version": "0.0.1"
+  "description": "Helps you write scripts that can be published on Garden-AI",
+  "version": "0.0.1",
+  "commands": [
+    {
+      "name": "gardener",
+      "description": "Start the Garden-AI publishing workflow to convert research papers and code into deployable Garden-AI functions"
+    }
+  ]
 }
