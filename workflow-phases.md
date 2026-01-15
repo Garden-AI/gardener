@@ -51,420 +51,52 @@ Transform research code → production-ready scientific API. Bridge gap between:
 
 ---
 
-## Complete Examples: Code → Publication → Usage
+## Code Patterns and Examples
 
-### Example 1: groundhog_hpc Function
+**For complete working examples across different scientific domains**, see:
+- **modal-examples.md** - Chemistry, computer vision, NLP examples
+- **hpc-examples.md** - Materials science, biology, quantum chemistry examples
 
-**The Published Function:**
+**Generic pattern structure** (see example files for complete implementations):
+
 ```python
-# /// script
-# requires-python = ">=3.10"
-# dependencies = ["ase>=3.22", "torch>=2.0", "fairchem-core>=1.1.0"]
-# [tool.hog.polaris]
-# endpoint = "4b116d3c-1703-4f8f-9f6f-39921e5864df"
-# ///
+# Function that processes batch of inputs
+def compute_batch(inputs: list[DomainType], param: float = default) -> dict:
+    """[Scientific task description]"""
 
-"""Structure relaxation using OC20 model for catalysis research."""
+    # Load model/tool
+    tool = load_domain_tool()
 
-import groundhog_hpc as hog
-
-
-@hog.function()
-def relax_structures_batch(
-    structures: list[dict],
-    fmax: float = 0.05,
-    max_steps: int = 200,
-) -> dict:
-    """
-    Batch structure relaxation for catalyst screening.
-
-    Args:
-        structures: List of ASE Atoms dicts (from atoms.todict())
-        fmax: Force convergence threshold (eV/Angstrom)
-        max_steps: Maximum optimization steps per structure
-
-    Returns:
-        {"results": [...], "summary": {...}}
-    """
-    from ase import Atoms
-    from ase.optimize import LBFGS
-    from fairchem.core import FAIRChemCalculator, pretrained_mlip
-
-    predictor = pretrained_mlip.get_predict_unit("oc20", device="cuda")
-    calc = FAIRChemCalculator(predictor)
-
+    # Process each input with error handling
     results = []
-    succeeded = converged = 0
+    succeeded = 0
 
-    for idx, structure_dict in enumerate(structures):
-        result = {"index": idx, "success": False}
+    for idx, item in enumerate(inputs):
+        result = {"index": idx, "input": item, "success": False}
         try:
-            atoms = Atoms.fromdict(structure_dict)
-            atoms.calc = calc
-            initial_energy = atoms.get_potential_energy()
-
-            opt = LBFGS(atoms, logfile=None)
-            opt.run(fmax=fmax, steps=max_steps)
-
-            final_energy = atoms.get_potential_energy()
-            forces = atoms.get_forces()
-            final_fmax = (forces**2).sum(axis=1).max()**0.5
-
-            result.update({
-                "success": True,
-                "optimized_structure": atoms.todict(),
-                "initial_energy": float(initial_energy),
-                "final_energy": float(final_energy),
-                "converged": final_fmax < fmax,
-                "steps": opt.get_number_of_steps(),
-                "final_fmax": float(final_fmax),
-            })
+            # Domain-specific computation
+            output = tool.process(item, param)
+            result.update({"success": True, "output": output})
             succeeded += 1
-            if result["converged"]:
-                converged += 1
         except Exception as e:
             result["error"] = str(e)
 
         results.append(result)
 
-    return {"results": results, "summary": {"total": len(structures), "succeeded": succeeded, "converged": converged}}
+    return {"results": results, "summary": {"total": len(inputs), "succeeded": succeeded}}
 ```
 
-**Using via Garden SDK:**
-```python
-import garden_ai
-from ase.build import fcc111, add_adsorbate
-
-garden = garden_ai.get_garden("10.26311/garden-abcd-1234")
-
-# Prepare structures
-candidates = [fcc111("Pt", size=(2, 2, 3), vacuum=10.0).todict()]
-
-# Call groundhog function with .remote()
-result = garden.relax_structures_batch.remote(
-    structures=candidates,
-    fmax=0.05,
-    endpoint="polaris",
-    account="my-allocation"
-)
-
-print(f"Converged: {result['summary']['converged']}/{result['summary']['total']}")
-```
+**Key principles** (applies to all domains):
+- Batch processing (lists of inputs)
+- Per-item error handling
+- Structured output: `{"results": [...], "summary": {...}}`
+- Type hints and comprehensive docstrings
 
 ---
 
-### Example 2: groundhog_hpc Class with Methods
+## Critical Platform Differences
 
-**The Published Class:**
-```python
-# /// script
-# requires-python = ">=3.10"
-# dependencies = ["torch>=2.0", "esm>=2.0.0"]
-# [tool.hog.anvil]
-# endpoint = "8c45d12f-2b3a-4e5c-9d1e-2f3b4c5d6e7f"
-# ///
-
-"""Protein structure and function prediction using ESM-2."""
-
-import groundhog_hpc as hog
-
-
-class ProteinAnalysis:
-    """Protein analysis tools using ESM-2 transformer."""
-
-    @hog.method()
-    def predict_structure_batch(sequences: list[str]) -> dict:
-        """
-        Predict 3D structure from amino acid sequences.
-
-        Args:
-            sequences: List of amino acid sequences
-
-        Returns:
-            {"results": [...], "summary": {...}}
-        """
-        import torch
-        import esm
-
-        model, alphabet = esm.pretrained.esm2_t33_650M_UR50D()
-        model.eval()
-
-        results = []
-        succeeded = 0
-
-        for idx, seq in enumerate(sequences):
-            result = {"index": idx, "sequence": seq, "success": False}
-            try:
-                with torch.no_grad():
-                    batch_tokens = alphabet.get_batch_converter()([(f"protein_{idx}", seq)])[2]
-                    predictions = model(batch_tokens)
-
-                result.update({
-                    "success": True,
-                    "coordinates": predictions["positions"].tolist(),
-                    "confidence": float(predictions["plddt"].mean()),
-                })
-                succeeded += 1
-            except Exception as e:
-                result["error"] = str(e)
-
-            results.append(result)
-
-        return {"results": results, "summary": {"total": len(sequences), "succeeded": succeeded}}
-```
-
-**Using via Garden SDK:**
-```python
-import garden_ai
-
-garden = garden_ai.get_garden("10.26311/garden-efgh-5678")
-
-sequences = ["MKTAYIAKQRQISFVK..."]
-
-# Call groundhog class method with .remote()
-result = garden.ProteinAnalysis.predict_structure_batch.remote(
-    sequences=sequences,
-    endpoint="anvil",
-    account="bio-project"
-)
-
-for r in result['results']:
-    if r['success']:
-        print(f"Confidence: {r['confidence']:.2f}")
-```
-
----
-
-### Example 3: Modal Function
-
-**The Published Function:**
-```python
-"""Molecular property prediction using ChemBERTa."""
-
-import modal
-
-app = modal.App("chemberta-admet")
-
-image = modal.Image.debian_slim(python_version="3.11").pip_install(
-    "transformers==4.36.0",
-    "torch==2.1.0",
-    "rdkit==2023.9.1",
-)
-
-
-@app.function(image=image, gpu="T4", cpu=2.0, memory=4096)
-def predict_admet_batch(
-    smiles_list: list[str],
-    properties: list[str] = ["solubility", "toxicity"]
-) -> dict:
-    """
-    Batch ADMET property prediction for drug screening.
-
-    Args:
-        smiles_list: List of SMILES strings
-        properties: Which properties to predict
-
-    Returns:
-        {"results": [...], "summary": {...}}
-    """
-    # ALL imports inside function for Modal
-    from transformers import AutoTokenizer, AutoModelForSequenceClassification
-    import torch
-    from rdkit import Chem
-
-    model = AutoModelForSequenceClassification.from_pretrained("seyonec/ChemBERTa-zinc-base-v1")
-    tokenizer = AutoTokenizer.from_pretrained("seyonec/ChemBERTa-zinc-base-v1")
-    model.eval()
-
-    results = []
-    valid = 0
-
-    for idx, smiles in enumerate(smiles_list):
-        result = {"index": idx, "smiles": smiles, "valid": False}
-        try:
-            mol = Chem.MolFromSmiles(smiles)
-            if mol is None:
-                result["error"] = "Invalid SMILES"
-                results.append(result)
-                continue
-
-            inputs = tokenizer(smiles, return_tensors="pt", padding=True)
-            with torch.no_grad():
-                outputs = model(**inputs)
-
-            predictions = {
-                "solubility": float(outputs.logits[0, 0]),
-                "toxicity": float(torch.sigmoid(outputs.logits[0, 1])),
-            }
-
-            result.update({"valid": True, "predictions": predictions})
-            valid += 1
-        except Exception as e:
-            result["error"] = str(e)
-
-        results.append(result)
-
-    return {"results": results, "summary": {"total": len(smiles_list), "valid": valid}}
-
-
-@app.local_entrypoint()
-def main():
-    """Test locally."""
-    result = predict_admet_batch.remote(["CCO", "CC(=O)O"])
-    print(f"Summary: {result['summary']}")
-```
-
-**Using via Garden SDK:**
-```python
-import garden_ai
-
-garden = garden_ai.get_garden("10.26311/garden-chem-xyz")
-
-candidate_molecules = [
-    "CC(C)Cc1ccc(cc1)C(C)C(=O)O",  # Ibuprofen
-    "CC(=O)Oc1ccccc1C(=O)O",        # Aspirin
-]
-
-# Call Modal function WITHOUT .remote()
-result = garden.predict_admet_batch(
-    smiles_list=candidate_molecules,
-    properties=["solubility", "toxicity"]
-)
-
-print(f"Valid: {result['summary']['valid']}/{result['summary']['total']}")
-```
-
----
-
-### Example 4: Modal Class with Methods
-
-**The Published Class:**
-```python
-"""Image analysis using vision transformers."""
-
-import modal
-
-app = modal.App("vision-analysis")
-
-image = modal.Image.debian_slim(python_version="3.11").pip_install(
-    "transformers==4.36.0",
-    "torch==2.1.0",
-    "pillow==10.1.0",
-)
-
-
-@app.cls(image=image, gpu="T4", cpu=2.0, memory=4096)
-class ImageAnalyzer:
-    """Image classification and feature extraction."""
-
-    def __init__(self):
-        """Load model once per container."""
-        from transformers import ViTForImageClassification, ViTImageProcessor
-        self.model = ViTForImageClassification.from_pretrained("google/vit-base-patch16-224")
-        self.processor = ViTImageProcessor.from_pretrained("google/vit-base-patch16-224")
-        self.model.eval()
-
-    @modal.method()
-    def classify_batch(self, image_urls: list[str]) -> dict:
-        """
-        Classify images from URLs.
-
-        Args:
-            image_urls: List of image URLs
-
-        Returns:
-            {"results": [...], "summary": {...}}
-        """
-        from PIL import Image
-        import requests
-        import torch
-        from io import BytesIO
-
-        results = []
-        succeeded = 0
-
-        for idx, url in enumerate(image_urls):
-            result = {"index": idx, "url": url, "success": False}
-            try:
-                response = requests.get(url)
-                img = Image.open(BytesIO(response.content))
-
-                inputs = self.processor(images=img, return_tensors="pt")
-                with torch.no_grad():
-                    outputs = self.model(**inputs)
-
-                logits = outputs.logits
-                predicted_class = logits.argmax(-1).item()
-
-                result.update({
-                    "success": True,
-                    "predicted_class": predicted_class,
-                    "confidence": float(torch.softmax(logits, dim=-1).max()),
-                })
-                succeeded += 1
-            except Exception as e:
-                result["error"] = str(e)
-
-            results.append(result)
-
-        return {"results": results, "summary": {"total": len(image_urls), "succeeded": succeeded}}
-
-    @modal.method()
-    def extract_features_batch(self, image_urls: list[str]) -> dict:
-        """Extract feature embeddings from images."""
-        from PIL import Image
-        import requests
-        import torch
-        from io import BytesIO
-
-        results = []
-        for idx, url in enumerate(image_urls):
-            result = {"index": idx, "url": url, "success": False}
-            try:
-                response = requests.get(url)
-                img = Image.open(BytesIO(response.content))
-
-                inputs = self.processor(images=img, return_tensors="pt")
-                with torch.no_grad():
-                    outputs = self.model(**inputs, output_hidden_states=True)
-
-                # Get last hidden state
-                features = outputs.hidden_states[-1].mean(dim=1).squeeze().tolist()
-
-                result.update({"success": True, "features": features})
-            except Exception as e:
-                result["error"] = str(e)
-
-            results.append(result)
-
-        return {"results": results, "summary": {"total": len(image_urls), "succeeded": len([r for r in results if r["success"]])}}
-```
-
-**Using via Garden SDK:**
-```python
-import garden_ai
-
-garden = garden_ai.get_garden("10.26311/garden-vision-abc")
-
-image_urls = [
-    "https://example.com/image1.jpg",
-    "https://example.com/image2.jpg",
-]
-
-# Call Modal class methods WITHOUT .remote()
-classification_result = garden.ImageAnalyzer.classify_batch(image_urls=image_urls)
-
-features_result = garden.ImageAnalyzer.extract_features_batch(image_urls=image_urls)
-
-print(f"Classified: {classification_result['summary']['succeeded']}")
-print(f"Features extracted: {features_result['summary']['succeeded']}")
-```
-
----
-
-## Key Patterns Summary
-
-**Calling Convention (CRITICAL):**
+**Calling Convention:**
 
 | Platform | Type | Calling Pattern | Example |
 |----------|------|-----------------|---------|
@@ -625,42 +257,46 @@ image = modal.Image.debian_slim(python_version="3.11").pip_install(
 # That's it! Package manager handles: pandas, scipy, pymatgen, etc.
 ```
 
-### Structure Output Pattern (Molecular/Materials CRITICAL)
-**Always return the full structure, not just computed properties.**
+### Complete Results Pattern (CRITICAL)
+**Return the full computational output, not just derived metrics.**
 
-✅ **Good:** Return complete result for client-side reconstruction
+✅ **Good:** Return complete results for downstream analysis
 ```python
 {
-    "relaxed_structure": xyz_string,  # Full structure as XYZ
-    "initial_structure": original_xyz,
-    "energy": -123.45,
-    "forces": [[fx, fy, fz], ...],
-    # User can reconstruct ASE Atoms and do any analysis
+    "processed_output": complete_result,  # Full result (structure, sequence, image, etc.)
+    "initial_input": original_input,
+    "computed_property": value,
+    "metadata": {...},
+    # Users can do any downstream analysis, visualization, or further computation
 }
 ```
 
-❌ **Bad:** Return only computed values
+❌ **Bad:** Return only summary metrics
 ```python
 {
-    "energy": -123.45,
-    "forces": [[fx, fy, fz], ...],
-    # Lost the structure! User can't visualize or analyze geometry
+    "computed_property": value,
+    # Lost the full output! Users can't visualize, analyze, or process further
 }
 ```
 
-**Why this matters:** Users need the full computational result (relaxed geometry, optimized structure) for:
-- Visualization
-- Downstream calculations (bond lengths, angles, etc.)
-- Further optimization or simulation
-- Comparison with initial structure
+**Why this matters:** Users need complete computational outputs for:
+- Visualization and interpretation
+- Downstream analysis and processing
+- Further computation or refinement
+- Comparison with initial inputs
+
+**Domain examples:**
+- Molecular/materials: Return optimized structure + energy (not just energy)
+- Image generation: Return generated image + metadata (not just quality score)
+- Sequence models: Return generated sequence + embeddings (not just perplexity)
 
 **Red flags:**
-- "I'll clone the full history"
-- "I'll pass this NumPy array to the remote function"
-- "Return just the energy and forces" (for molecular/materials models)
-- "Latest versions should work"
-- "I'll include 500MB checkpoint in the repo"
-- "I'll pin all transitive dependencies"
+- "I'll clone the full git history" (use --depth 1)
+- "I'll pass non-serializable objects to remote functions" (NumPy arrays, PIL images, etc.)
+- "Return just the computed metrics" (return complete outputs)
+- "Latest versions should work" (pin versions from repo)
+- "I'll include large files in repo" (>50MB checkpoints)
+- "I'll pin all transitive dependencies" (only pin what you import)
 
 ---
 
@@ -913,30 +549,30 @@ Ask yourself:
 
 ✅ **Workflow-focused (Good):**
 ```python
-def relax_structures(structures: list[str], task: str = "omat") -> list[dict]:
-    """Optimize atomic geometries to minimum energy."""
+def process_scientific_data(data: list[str], method: str = "standard") -> list[dict]:
+    """Process data using specified scientific method."""
 ```
-User thinks: "I need to relax some structures for my study"
+User thinks: "I need to process my data for analysis"
 
 ❌ **Internals-focused (Bad):**
 ```python
-def compute_graph_embeddings(
-    structures: list[str],
-    cutoff: float = 6.0,
-    max_neighbors: int = 50,
+def compute_model_embeddings(
+    data: list[str],
     embedding_dim: int = 512,
+    num_layers: int = 6,
+    attention_heads: int = 8,
 ) -> list[dict]:
-    """Compute graph neural network embeddings for atomic structures."""
+    """Compute neural network embeddings."""
 ```
-User thinks: "What's a graph embedding? Why do I care about cutoff radius?"
+User thinks: "What's an embedding? Why do I care about attention heads?"
 
-**Expose parameters that matter to scientists:**
-- ✅ `task="omat"` (which DFT level of theory - scientists understand this)
-- ✅ `fmax=0.05` (convergence criterion - standard in the field)
-- ✅ `temperature_K=300` (physical parameter with meaning)
-- ❌ `hidden_dim=512` (model architecture detail - irrelevant to science)
-- ❌ `num_layers=6` (implementation detail)
-- ❌ `cutoff=6.0` (internal preprocessing parameter)
+**Expose scientifically meaningful parameters:**
+- ✅ Domain-specific methods/settings (scientists understand these)
+- ✅ Convergence thresholds, confidence levels (standard in the field)
+- ✅ Physical/experimental parameters (temperature, pressure, etc.)
+- ❌ Model architecture choices (`hidden_dim`, `num_layers`)
+- ❌ Implementation details (`batch_size`, `learning_rate`)
+- ❌ Internal preprocessing parameters (cutoffs, normalizations)
 
 **Red flags you're exposing internals:**
 - Parameters are model hyperparameters
@@ -952,24 +588,24 @@ User thinks: "What's a graph embedding? Why do I care about cutoff radius?"
 
 ❌ **Wrong: Start with single-item API**
 ```python
-def relax_structure(structure: dict, task: str) -> dict:
-    """Optimize a single atomic structure."""
-    # User has to call this 1000x for screening campaign
-    # Expensive invocation overhead on HPC
+def process_item(item: dict, method: str) -> dict:
+    """Process a single item."""
+    # User has to call this 1000x for screening workflow
+    # Expensive invocation overhead
 ```
 
 ✅ **Correct: Start with batch API**
 ```python
-def relax_structures_batch(
-    structures: list[dict],
-    task: str,
+def process_batch(
+    items: list[dict],
+    method: str,
     fail_fast: bool = False
 ) -> dict:
-    """Batch structure relaxation for screening campaigns."""
+    """Batch processing for screening workflows."""
     return {
         "results": [
-            {"index": i, "success": True, "optimized_structure": ..., ...}
-            for i in range(len(structures))
+            {"index": i, "success": True, "output": ..., ...}
+            for i in range(len(items))
         ],
         "summary": {"total": 100, "succeeded": 98, "failed": 2}
     }

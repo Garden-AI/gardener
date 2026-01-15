@@ -1,4 +1,4 @@
-# Repository Patterns for Model Analysis
+# Repository Analysis Patterns
 
 **Referenced from:** workflow-phases.md (Phase 3: Explore Repository)
 
@@ -6,79 +6,87 @@ Load this file when you need guidance on analyzing unfamiliar repositories and M
 
 ---
 
-## CRITICAL: Use Library Abstractions, Don't Reimplement
+## Core Principle: Find and Use High-Level Interfaces
 
 **Most important rule: If the library provides a high-level interface, USE IT.**
 
-### Common Interface Patterns
+### How to Identify High-Level Interfaces
 
-**Atomistic ML Models → ASE Calculator Pattern:**
+Most ML libraries provide abstractions that hide complexity. Your job is to find and use them.
+
+**Look for these patterns:**
+
+1. **Classes named:** Calculator, Pipeline, Predictor, Interface, Engine, Wrapper
+2. **Methods that return results:** `.predict()`, `.compute()`, `.generate()`, `.process()`
+3. **Example scripts:** `examples/`, `demo.py`, README quickstart sections
+
+**Don't:**
+- Manually build internal representations (graphs, embeddings, tokens)
+- Call low-level model methods directly
+- Reimplement preprocessing logic
+
+### Interface Pattern Examples
+
+These are examples of the principle above. The specific classes/methods vary by framework - always check the repository's documentation and examples.
+
+**Example 1: Model with Calculator/Predictor Interface**
 ```python
-# ✅ Correct: Use the calculator interface
-from fairchem.core import FAIRChemCalculator
+# ✅ Use the high-level interface
+from library import Calculator
 
-atoms.calc = FAIRChemCalculator(model, task_name="omat")
-energy = atoms.get_potential_energy()
-forces = atoms.get_forces()
-stress = atoms.get_stress()
+calc = Calculator(model)
+result = calc.compute(input_data)
 
-# ❌ Wrong: Manual preprocessing
-graph = build_neighbor_list(atoms, cutoff=6.0)
-embeddings = compute_composition_embedding(atoms)
-output = model.forward(graph, embeddings)
-energy = output["energy"]  # Don't do this!
+# ❌ Don't manually preprocess
+preprocessed = manual_preprocessing(input_data)
+output = model.forward(preprocessed)
 ```
 
-**Transformers → Pipeline Pattern:**
+**Example 2: NLP Library with Pipeline**
 ```python
-# ✅ Correct: Use the pipeline
+# ✅ Use the pipeline
 from transformers import pipeline
 
-classifier = pipeline("text-classification", model="model-name")
-results = classifier(["text1", "text2"])
+classifier = pipeline("task-name", model="model-name")
+results = classifier(texts)
 
-# ❌ Wrong: Manual tokenization
+# ❌ Don't manually tokenize
 tokenizer = AutoTokenizer.from_pretrained("model-name")
-tokens = tokenizer(text, return_tensors="pt", padding=True)
+tokens = tokenizer(text)
 output = model(**tokens)
-logits = output.logits  # Don't do this!
 ```
 
-**Image Models → Transform Pattern:**
+**Example 3: Vision Library with Transforms**
 ```python
-# ✅ Correct: Use provided transforms
-from torchvision.models import resnet50, ResNet50_Weights
+# ✅ Use provided transforms
+from library.models import ModelClass
 
-weights = ResNet50_Weights.DEFAULT
-model = resnet50(weights=weights)
+weights = ModelClass.DEFAULT_WEIGHTS
+model = ModelClass(weights=weights)
 preprocess = weights.transforms()
-prediction = model(preprocess(image))
+result = model(preprocess(image))
 
-# ❌ Wrong: Manual preprocessing
-image = image.resize((224, 224))
-image = np.array(image) / 255.0
-image = (image - [0.485, 0.456, 0.406]) / [0.229, 0.224, 0.225]  # Don't!
+# ❌ Don't manually normalize
+normalized = (image - mean) / std
 ```
 
 ### How to Find the Interface
 
-**Search for these patterns in the repository:**
-```bash
-# Look for calculator/pipeline/interface classes
-rg "class.*Calculator|class.*Pipeline|class.*Interface"
+**Priority order for finding interfaces:**
 
-# Look for example usage
-rg "get_potential_energy|get_forces|pipeline\(|\.transform\("
-
-# Check for preprocessing functions that are PUBLIC
-rg "def (preprocess|transform|prepare).*:" --type py
-```
-
-**Priority for learning the interface:**
-1. **README.md** - Often shows quickstart usage
-2. **examples/ directory** - Real end-to-end examples
+1. **README.md** - Usually shows quickstart/basic usage
+2. **examples/ directory** - Complete working examples
 3. **tutorials/ or docs/** - Step-by-step guides
 4. **tests/ directory** - Shows expected usage patterns
+
+**Search patterns:**
+```bash
+# Find interface classes
+rg "class.*(Calculator|Pipeline|Predictor|Interface|Engine)"
+
+# Find example usage in code
+rg "\.predict\(|\.compute\(|\.process\(|\.generate\("
+```
 
 ### Red Flags You're Doing It Wrong
 
@@ -239,133 +247,41 @@ def preprocess_molecule(smiles: str):
 # TODO in docstring: "Using latest torch, may need pinning"
 ```
 
-## Framework-Specific Input/Output Handling
+---
 
-### Chemistry (RDKit, SMILES)
+## General Input/Output Patterns
 
-**Input:** String SMILES
-**Processing:** Convert to RDKit mol object internally
-**Output:** Structured dict with results
+**Use standard serializable types for inputs/outputs:**
 
+✅ **Serializable:** strings, ints, floats, lists, dicts, bools
+❌ **Not serializable:** NumPy arrays, PIL images, custom objects, file handles
+
+**General pattern:**
 ```python
-def predict_property(smiles_list: list[str]) -> list[dict]:
-    """
-    Predict molecular properties from SMILES strings.
-
-    Args:
-        smiles_list: List of SMILES strings (e.g., ["CCO", "CC(=O)O"])
-
-    Returns:
-        List of dicts with structure:
-        {
-            "smiles": original input,
-            "property": predicted value,
-            "valid": whether SMILES was valid,
-        }
-    """
-    from rdkit import Chem
+def process_batch(inputs: list[str]) -> list[dict]:
+    """Process domain-specific inputs."""
+    # Import domain library
+    from domain_library import DomainObject
 
     results = []
-    for smiles in smiles_list:
-        mol = Chem.MolFromSmiles(smiles)  # Internal conversion
-        if mol is None:
-            results.append({"smiles": smiles, "valid": False})
-            continue
+    for item in inputs:
+        # Convert string input to domain object internally
+        obj = DomainObject.from_string(item)
 
-        # ... prediction logic
+        # Process
+        output = obj.compute_property()
+
+        # Convert back to serializable types
         results.append({
-            "smiles": smiles,
-            "property": prediction,
-            "valid": True,
+            "input": item,  # Original string
+            "output": serialize(output),  # Back to basic types
+            "metadata": {...},
         })
 
-    return results  # Native Python types (serializable)
+    return results  # All basic Python types
 ```
 
-### Materials (ASE, XYZ files)
-
-**Input:** String XYZ format or CIF
-**Processing:** Parse to atoms object internally
-**Output:** Dict with results (not ASE objects)
-
-```python
-def relax_structure(xyz_string: str) -> dict:
-    """
-    Relax atomic structure to minimum energy.
-
-    Args:
-        xyz_string: Structure in XYZ format:
-            "2
-            Lattice=\"5.0 0 0 0 5.0 0 0 0 5.0\"
-            C 0.0 0.0 0.0
-            C 1.25 1.25 1.25"
-
-    Returns:
-        {
-            "energy": final energy in eV,
-            "positions": list of [x, y, z] coordinates,
-            "forces": list of force vectors,
-        }
-    """
-    from ase.io import read
-    from io import StringIO
-
-    # Parse internally
-    atoms = read(StringIO(xyz_string), format="xyz")
-
-    # ... relaxation logic
-
-    # Return serializable data
-    return {
-        "energy": float(final_energy),
-        "positions": atoms.positions.tolist(),  # NumPy → list
-        "forces": forces.tolist(),
-    }
-```
-
-### Images (PIL, NumPy)
-
-**Input:** Base64 encoded image string OR URL
-**Processing:** Decode/download internally
-**Output:** Dict with predictions
-
-```python
-def classify_image(image_data: str, source: str = "base64") -> dict:
-    """
-    Classify image content.
-
-    Args:
-        image_data: Base64 string or URL
-        source: "base64" or "url"
-
-    Returns:
-        {
-            "top_class": class name,
-            "confidence": probability,
-            "top_5": list of (class, prob) tuples,
-        }
-    """
-    from PIL import Image
-    import base64
-    from io import BytesIO
-    import requests
-
-    # Handle input
-    if source == "base64":
-        img_bytes = base64.b64decode(image_data)
-        img = Image.open(BytesIO(img_bytes))
-    else:  # URL
-        response = requests.get(image_data)
-        img = Image.open(BytesIO(response.content))
-
-    # ... classification
-
-    return {
-        "top_class": "cat",
-        "confidence": 0.95,
-        "top_5": [("cat", 0.95), ("dog", 0.03), ...],
-    }
-```
+**Key principle:** Accept and return serializable types. Do conversions (strings ↔ objects, lists ↔ arrays) internally.
 
 ## Common Repository Structures
 
