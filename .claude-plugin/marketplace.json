@@ -1,0 +1,13 @@
+{
+  "name": "Garden-AI",
+  "owner": {
+    "name": "Hayden Holbrook"
+  },
+  "plugins": [
+    {
+      "name": "gardener",
+      "source": ".",
+      "description": "Helps write scripts that can be published on Garden-AI"
+    }
+  ]
+}
