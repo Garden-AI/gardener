@@ -6,7 +6,7 @@
   "plugins": [
     {
       "name": "gardener",
-      "source": ".",
+      "source": "./skills/gardener",
       "description": "Helps write scripts that can be published on Garden-AI"
     }
   ]
