@@ -5,5 +5,6 @@
   "author": {
     "name": "Hayden Holbrook"
   },
-  "commands": ["./commands/gardener.md"]
+  "commands": ["./commands/gardener.md"],
+  "skills": "./skills/"
 }
