@@ -929,7 +929,33 @@ Follow those files exactly for code generation.
 
 **Goal:** Validate the generated code actually works through iterative testing and refinement.
 
-**CRITICAL: This is NOT a "write tests and move on" phase. You must actively RUN the code, find bugs, fix them, and iterate with user feedback.**
+**CRITICAL SUCCESS CRITERION:**
+- **Modal**: If `uv run modal run modal_app.py` completes successfully with correct output → **READY FOR GARDEN PUBLICATION**
+- **HPC**: If `uv run hog run hpc_script.py` completes successfully with correct output → **READY FOR GARDEN PUBLICATION**
+
+**This is NOT a "write tests and move on" phase. This is an ACTIVE DEBUGGING CYCLE:**
+1. ✅ **RUN** the code using `uv run modal run` or `uv run hog run`
+2. ❌ **ENCOUNTER** errors or issues (they WILL happen)
+3. 🔧 **FIX** the errors by editing the code
+4. 🔄 **REPEAT** steps 1-3 until it works
+5. ✅ **VERIFY** output with user before moving to Phase 9
+
+**You MUST actually execute the code. Do NOT:**
+- Just write test code without running it
+- Assume it will work without testing
+- Move to Phase 9 with untested code
+- Skip testing because "it looks correct"
+
+**WORKFLOW FOR PHASE 8:**
+```
+Write test → Run code → Fix errors → Run again → Verify output → Get approval → Phase 9
+          ↑___________________________________________|
+                    (Repeat until success)
+```
+
+**You are in active debugging mode. Keep running and fixing until it works.**
+
+---
 
 ### Step 1: Generate Test Harness
 
@@ -997,13 +1023,18 @@ def test_anvil():
 
 **MANDATORY: Actually run the code. Don't skip to publication guidance.**
 
+**This is the moment of truth - your code must run successfully in Modal's/groundhog's container.**
+
 **For Modal:**
 ```bash
 # Run local entrypoint with dependencies
 uv run modal run your_modal_app.py
 
-# This uses uv to ensure modal and all dependencies are available
-# Without 'uv run', you'd need modal and dependencies installed globally
+# What happens:
+# 1. Modal builds the container with your image definition
+# 2. Installs all apt and pip packages
+# 3. Runs your @app.local_entrypoint() in the container
+# 4. If this succeeds with correct output → READY FOR GARDEN PUBLICATION
 ```
 
 **For groundhog_hpc:**
@@ -1011,113 +1042,253 @@ uv run modal run your_modal_app.py
 # Run harness test with dependencies
 uv run hog run your_hpc_script.py
 
-# This uses uv to ensure groundhog-hpc and all dependencies are available
-# Without 'uv run', you'd need groundhog-hpc and dependencies installed globally
+# What happens:
+# 1. groundhog sets up the function environment
+# 2. Runs your @hog.harness() test function
+# 3. If this succeeds with correct output → READY FOR GARDEN PUBLICATION
 ```
 
-**What to check:**
+**What success looks like:**
+- ✅ Command exits with code 0 (no errors)
+- ✅ Prints expected output from your test data
+- ✅ Output format matches the documented structure
+- ✅ Values are scientifically reasonable
+- ✅ No warnings about missing dependencies
+
+**If it runs successfully → You're done with testing! Move to Phase 9 after user verification.**
+
+**What to check when it runs:**
 1. ✅ **Syntax errors**: Does Python parse the file?
-2. ✅ **Import errors**: Are all dependencies available?
+2. ✅ **Import errors**: Are all dependencies available (Python AND system)?
 3. ✅ **Model loading**: Can it load the model/weights?
 4. ✅ **Test execution**: Does the test harness run without errors?
 5. ✅ **Output format**: Does output match expected structure?
 6. ✅ **Scientific sanity**: Do values fall in reasonable ranges?
 
----
+**Common execution flow:**
+```
+$ uv run modal run your_app.py
+✓ Created objects.
+├── 🔨 Created mount /Users/.../your_app.py
+├── 🔨 Created image (apt packages, pip packages)
+└── 🔨 Created function compute_batch
+✓ Running local entrypoint...
+[Your test output here]
+✓ App completed successfully.
 
-### Step 3: Debug and Fix Issues
-
-**When errors occur (they will):**
-
-1. **Read the error message carefully**
-   - What's the actual error? (ImportError, AttributeError, ValueError, etc.)
-   - Which line triggered it?
-   - What was the stack trace?
-
-2. **Common issues and fixes:**
-
-| Error Type | Likely Cause | Fix |
-|------------|--------------|-----|
-| `ImportError: No module named 'X'` | Missing dependency | Add to `dependencies` list |
-| `AttributeError: 'NoneType' object has no attribute` | Model failed to load | Check model path/URL/HF ID |
-| `ValueError: Invalid task name` | Typo in task validation | Fix task name list |
-| `RuntimeError: CUDA out of memory` | Model too large for GPU | Use smaller variant or add memory note |
-| `FileNotFoundError: checkpoint.pt` | Wrong checkpoint path | Update path or add download logic |
-| `TypeError: 'dict' object is not callable` | Wrong calling convention | Check Modal vs groundhog patterns |
-
-3. **Fix the code**
-   - Edit the file to address the error
-   - Re-run the validation
-   - Repeat until it works
-
-4. **Document any workarounds**
-   - If you had to deviate from the paper/repo, explain why in comments
-   - Add notes about limitations or known issues
+→ SUCCESS! Ready for Garden-AI publication.
+```
 
 ---
 
-### Step 4: Get User Feedback
+### Step 3: Debug and Fix Issues (Iterate Until It Works)
 
-**STOP and present results to user:**
+**Errors WILL occur on first run - this is normal. Your job is to fix them iteratively.**
 
-**If successful:**
+**The debugging cycle:**
 ```
-✅ Code validation successful!
-
-Test run completed with these outputs:
-[Show actual output from running the test]
-
-Scientific validation:
-- [Result 1]: Expected [X], got [Y] - [✅ matches / ⚠️ close / ❌ mismatch]
-- [Result 2]: Expected [X], got [Y] - [✅ matches / ⚠️ close / ❌ mismatch]
-
-Does this look scientifically correct? Should I adjust anything before publication?
+1. Run: uv run modal run app.py
+2. Error: Read the error message
+3. Fix: Edit the code to address the error
+4. Run again: uv run modal run app.py
+5. Repeat until success
 ```
 
-**If there are errors:**
+**DO NOT give up after one error. Keep iterating until the code works.**
+
+#### 1. Read Error Messages Carefully
+
+Look for:
+- **Error type**: ImportError, AttributeError, ValueError, RuntimeError
+- **Error location**: Which line/file triggered it
+- **Stack trace**: Full path of the error
+- **Modal's container logs**: Often show build vs runtime errors
+
+**Example error analysis:**
 ```
-⚠️ Encountered errors during testing:
-
-Error: [Copy exact error message]
-
-I tried: [Explain what you attempted]
-
-This might be because: [Your hypothesis about the issue]
-
-Options:
-1. I can try [alternative approach]
-2. You might need to [user action, like getting credentials]
-3. This might be a [known limitation we should document]
-
-How should I proceed?
+ImportError: libGL.so.1: cannot open shared object file
+→ Missing system package
+→ Fix: Add apt_install("libgl1") to image definition
+→ Re-run: Should work now
 ```
 
-**Use AskUserQuestion to:**
-- Confirm outputs are scientifically reasonable
-- Get guidance on errors you can't resolve
-- Validate any assumptions you made during debugging
-- Check if there are missing requirements (credentials, model access, etc.)
+#### 2. Common Issues and Fixes
+
+| Error Type | Likely Cause | Fix | Re-run? |
+|------------|--------------|-----|---------|
+| `ImportError: libGL.so.1` | Missing system library | Add `apt_install("libgl1", "libglib2.0-0")` | ✅ Yes |
+| `ImportError: No module named 'X'` | Missing Python package | Add `"X==version"` to `pip_install()` | ✅ Yes |
+| `ModuleNotFoundError: transformers` | Missing dependency | Add to pip_install, check repo versions | ✅ Yes |
+| `AttributeError: 'NoneType'` in model loading | Model failed to load | Check HF model ID, checkpoint URL, or path | ✅ Yes |
+| `FileNotFoundError: model.pt` | Wrong checkpoint path | Update to correct path or add download logic | ✅ Yes |
+| `RuntimeError: CUDA out of memory` | Model too large for GPU | Change to larger GPU: `gpu="A100"` | ✅ Yes |
+| `RuntimeError: Expected tensor on cuda` | Model on wrong device | Add `.to(device)` or check device handling | ✅ Yes |
+| `ValueError: Invalid task` | Typo in task validation | Fix task name in code | ✅ Yes |
+| `TypeError: 'dict' object is not callable` | Wrong calling syntax | Check if using Modal vs groundhog correctly | ✅ Yes |
+| Import works locally but fails on Modal | Imports at module level | Move ALL imports inside functions (Modal rule) | ✅ Yes |
+
+#### 3. Fix the Code and Re-run
+
+**Process:**
+1. **Edit the file** - Use the Edit tool to fix the issue
+2. **Re-run immediately** - `uv run modal run app.py` or `uv run hog run script.py`
+3. **Check if fixed** - Did this error go away? Is there a new error?
+4. **Iterate** - Keep fixing until no errors remain
+
+**Example iteration:**
+```
+Run 1: ImportError: libGL.so.1
+→ Fix: Added apt_install("libgl1")
+Run 2: ImportError: libglib2.0.so.0
+→ Fix: Added apt_install("libglib2.0-0")
+Run 3: ModuleNotFoundError: cv2
+→ Fix: Added opencv-python to pip_install
+Run 4: Success! ✅
+```
+
+#### 4. When You're Stuck
+
+If you've tried multiple fixes and still hitting errors:
+- **Re-read the repository** - Check if there's setup you missed
+- **Check versions** - Ensure dependency versions match the repo exactly
+- **Look for Dockerfile** - Repository's Dockerfile often has the solution
+- **Ask the user** - Use AskUserQuestion to get guidance on persistent issues
+
+**But keep trying! Most errors are fixable with careful attention to:**
+- System dependencies (apt_install)
+- Python dependencies (pip_install)
+- Import locations (inside functions for Modal)
+- Model paths and URLs
+- GPU sizes and memory
+
+#### 5. Document Workarounds
+
+If you had to deviate from paper/repo:
+- Add comments explaining why
+- Note limitations in docstrings
+- Document assumptions made
 
 ---
 
-### Step 5: Iterate Until Working
+### Step 4: Verify Success with User
 
-**Don't move to Phase 9 until:**
-- ✅ Code runs without errors (or with only documented limitations)
-- ✅ Test outputs match expected scientific ranges
-- ✅ User confirms it looks correct
-- ✅ All assumptions are documented
+**After the code runs successfully, STOP and present results to user.**
 
-**Iteration cycle:**
-1. Run → 2. Encounter error → 3. Fix → 4. Run again → 5. Get feedback → Repeat
+**IMPORTANT: You must show the ACTUAL output from running the code, not hypothetical output.**
 
-**Red flags:**
-- "I'll let the user debug it"
-- "It should work, moving to publication"
-- "Small errors are okay"
-- "User can test after publishing"
+#### If Successful (Code Ran Without Errors)
 
-**The code must be VALIDATED and WORKING before Phase 9.**
+Present the actual test results:
+
+```
+✅ Code runs successfully!
+
+Command executed:
+uv run modal run your_app.py
+
+Output from test run:
+[PASTE THE ACTUAL OUTPUT FROM THE TERMINAL HERE]
+[Include all printed results, summaries, and completion messages]
+
+Scientific validation check:
+- Input: [What you tested with - e.g., "Ibuprofen SMILES from paper"]
+- Output: [What was computed - e.g., "LogP = 3.47, MW = 206.3"]
+- Expected: [From paper - e.g., "LogP ~3.5, MW ~206 (Table 1)"]
+- Status: [✅ Matches expected range / ⚠️ Close but verify / ❌ Doesn't match]
+
+The code is now ready for Garden-AI publication. Does this output look scientifically correct? Should I proceed to Phase 9 (publication guidance)?
+```
+
+**DO NOT move to Phase 9 without:**
+- ✅ Showing actual terminal output from successful run
+- ✅ Comparing results to paper's expected values
+- ✅ Getting user confirmation
+
+#### If There Are Persistent Errors
+
+**Only present to user after you've tried multiple fixes yourself:**
+
+```
+⚠️ Encountered persistent error during testing:
+
+Error message:
+[PASTE EXACT ERROR FROM TERMINAL]
+
+What I tried (iterations):
+1. [First fix attempt] - Result: [New error or same error]
+2. [Second fix attempt] - Result: [New error or same error]
+3. [Third fix attempt] - Result: [Current state]
+
+My analysis:
+This error likely means: [Your hypothesis]
+
+Possible solutions:
+1. [Option 1: What you can try next]
+2. [Option 2: What user might need to provide]
+3. [Option 3: Alternative approach]
+
+Should I try option [X], or do you have other suggestions?
+```
+
+**Use AskUserQuestion when:**
+- Code works but output values seem unusual
+- You need clarification on expected scientific ranges
+- Persistent errors after 3+ fix attempts
+- Missing credentials/access (HuggingFace tokens, model access)
+- Repository structure is unclear after thorough exploration
+
+---
+
+### Step 5: Move to Phase 9 Only When Ready
+
+**Prerequisites for Phase 9 (ALL must be true):**
+
+✅ **Code executes successfully**
+- `uv run modal run app.py` completes with exit code 0 (no errors)
+- OR `uv run hog run script.py` completes with exit code 0
+
+✅ **Output is correct**
+- Printed results match expected format: `{"results": [...], "summary": {...}}`
+- Values fall within scientific reasonable ranges
+- Matches expectations from paper (within tolerance)
+
+✅ **User confirmed**
+- You showed the ACTUAL terminal output
+- User verified it looks scientifically correct
+- User approved moving to publication
+
+✅ **All dependencies included**
+- System packages (apt_install) if needed
+- Python packages (pip_install) with versions
+- No missing imports or modules
+
+✅ **Assumptions documented**
+- Any deviations from paper/repo are noted in comments
+- Known limitations are in docstrings
+
+**The iteration cycle (repeat until above conditions met):**
+```
+1. Run: uv run modal run app.py
+2. Error/Issue: Read what went wrong
+3. Fix: Edit the code
+4. Run again: uv run modal run app.py
+5. Success: Show output to user
+6. Confirm: Get user approval
+7. Proceed to Phase 9
+```
+
+**Red flags that mean you're NOT ready:**
+- ❌ "I'll let the user test it themselves"
+- ❌ "It should work, moving to publication" (without running)
+- ❌ "Small errors are probably fine"
+- ❌ "User can debug after publishing"
+- ❌ "Testing would take too long"
+- ❌ "I wrote tests but didn't run them"
+
+**Remember:**
+- If `uv run modal run` succeeds → It's ready for Garden
+- If it fails → Keep debugging until it works
+- Don't move forward with broken code
 
 ---
 

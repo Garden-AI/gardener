@@ -92,8 +92,14 @@ digraph publication_workflow {
 | 1-5: Understand | Gather, analyze, explore, synthesize, design API | workflow-phases.md |
 | 6: Choose | Modal vs HPC decision | workflow-phases.md |
 | 7: Generate | Write Modal app or groundhog script following patterns | modal-pattern.md / hpc-pattern.md |
-| 8: Test & Refine | Run code, debug, fix issues, iterate with user | workflow-phases.md |
+| 8: Test & Refine | **ACTIVELY RUN** code, debug errors, fix, repeat until working | workflow-phases.md |
 | 9: Publish | Upload to Garden-AI with metadata | workflow-phases.md |
+
+**Phase 8 is MANDATORY and ACTIVE:**
+- Must execute: `uv run modal run` or `uv run hog run`
+- If it works → Ready for Garden publication
+- If it fails → Debug and fix until it works
+- Cannot skip or assume it works
 
 ## How to Use This Skill
 
@@ -133,6 +139,14 @@ digraph publication_workflow {
 - "This works without decorators"
 - "Time is tight, skip the boilerplate"
 - "Ready to publish" (before verification)
+
+**Testing violations (check Phase 8 in workflow-phases.md):**
+- "I wrote tests but won't run them"
+- "It should work without testing"
+- "User can test it themselves"
+- "Small errors are probably fine"
+- "Testing takes too long"
+- Moving to Phase 9 without running code
 
 **All of these mean: Stop. Load the appropriate supporting file and follow it exactly. All checkpoints are MANDATORY.**
 
@@ -201,7 +215,9 @@ result = garden.my_hpc_function(args)  # ❌ Wrong - will error
 - Modal: `@app.function()` and `@app.cls()` / `@modal.method()`
 - groundhog: `@hog.function()` and `@hog.method()`
 
-❌ **Not testing before Phase 8:**
-- Always run the code during Phase 8 (Test & Validate)
-- Fix errors iteratively with user feedback
-- Don't move to publication until working
+❌ **Not testing in Phase 8:**
+- Phase 8 is MANDATORY - you MUST run the code
+- Execute: `uv run modal run` or `uv run hog run`
+- If errors occur: Fix them and re-run (iterate until success)
+- Success criterion: Command completes without errors + output looks correct
+- Don't move to Phase 9 until code actually runs successfully
