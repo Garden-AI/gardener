@@ -1,7 +1,7 @@
 {
   "name": "gardener",
   "description": "Helps you write scripts that can be published on Garden-AI",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "author": {
     "name": "Hayden Holbrook"
   },
