@@ -414,9 +414,43 @@ Use Glob to locate:
 ```
 
 Read these to identify:
-- **All dependencies** with versions
+- **All Python dependencies** with versions
 - **Python version** requirements
 - **Special system dependencies** (CUDA, MPI, etc.)
+
+### 1b. Check for System Package Requirements (Modal Only)
+
+**IMPORTANT: Many ML models need non-Python system packages**
+
+Look for system dependencies in:
+- **Dockerfile**: `RUN apt-get install <packages>` or `apt install <packages>`
+- **README.md**: Installation sections mentioning apt/brew/yum packages
+- **environment.yml**: Comments about system requirements
+- **.github/workflows/**: CI files often show system package installs
+- **docs/**: Installation documentation
+
+**Common indicators you need system packages:**
+- Repository has a Dockerfile
+- README mentions "install libXYZ" or "requires system libraries"
+- Uses computer vision (OpenCV) → likely needs `libgl1`, `libglib2.0-0`
+- Uses audio/video processing → likely needs `ffmpeg`, `libsndfile1`
+- Uses molecular visualization → might need rendering libraries
+- Has complex dependencies like GDAL, cartopy → geospatial system libs
+
+**Action for Modal apps:**
+If you find system dependencies, you'll use `image.apt_install("package-name")` when generating the Modal code. Note these down during exploration.
+
+**Example findings to note:**
+```
+Python deps: opencv-python==4.8.0, torch==2.0.1
+System deps: libgl1, libglib2.0-0 (found in Dockerfile line 5)
+→ Will need: image.apt_install("libgl1", "libglib2.0-0")
+```
+
+**groundhog_hpc note:** groundhog does NOT support installing system packages. If system deps are required, either:
+- Verify they're already on the HPC system
+- Recommend Modal instead
+- Note this limitation for the user
 
 ### 2. Find Code Structure
 Use Glob to find Python files:
@@ -965,23 +999,20 @@ def test_anvil():
 
 **For Modal:**
 ```bash
-# Check syntax first
-python your_modal_app.py --help
+# Run local entrypoint with dependencies
+uv run modal run your_modal_app.py
 
-# Run local entrypoint
-modal run your_modal_app.py
+# This uses uv to ensure modal and all dependencies are available
+# Without 'uv run', you'd need modal and dependencies installed globally
 ```
 
 **For groundhog_hpc:**
 ```bash
-# Check syntax first
-python your_hpc_script.py --help
+# Run harness test with dependencies
+uv run hog run your_hpc_script.py
 
-# Validate PEP 723 metadata
-uv run --with groundhog-hpc python your_hpc_script.py
-
-# Or if dependencies installed:
-python your_hpc_script.py
+# This uses uv to ensure groundhog-hpc and all dependencies are available
+# Without 'uv run', you'd need groundhog-hpc and dependencies installed globally
 ```
 
 **What to check:**

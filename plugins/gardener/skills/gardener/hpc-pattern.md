@@ -265,7 +265,11 @@ Before claiming HPC script is ready:
 
 **Testing:**
 ```bash
-python your_script.py
+# Run harness test with dependencies
+uv run hog run your_script.py
+
+# This ensures groundhog-hpc and all dependencies are available
+# Without 'uv run', you'd need groundhog-hpc installed globally
 ```
 
 Common errors:

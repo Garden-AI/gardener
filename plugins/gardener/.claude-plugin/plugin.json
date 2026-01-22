@@ -6,5 +6,32 @@
     "name": "Hayden Holbrook"
   },
   "commands": ["./commands/gardener.md"],
-  "skills": "./skills/"
+  "skills": "./skills/",
+  "keywords": [
+    "garden",
+    "garden-ai",
+    "gardener",
+    "publish",
+    "publishing",
+    "modal",
+    "groundhog",
+    "hpc",
+    "model publishing",
+    "scientific model",
+    "ml model",
+    "machine learning model",
+    "research model",
+    "paper",
+    "research paper",
+    "doi",
+    "fair",
+    "deployment",
+    "matbench",
+    "matbench discovery",
+    "serverless",
+    "globus compute",
+    "remote execution",
+    "citable",
+    "scientific computing"
+  ]
 }
