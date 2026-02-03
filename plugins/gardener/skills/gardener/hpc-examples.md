@@ -426,21 +426,27 @@ def test_anvil():
     print(f"Result: {result}")
 ```
 
-### 5. Module-Level Imports OK
+### 5. Import Placement
 
-Unlike Modal, groundhog allows module-level imports:
+**RECOMMENDED: Put imports inside functions (except `groundhog_hpc as hog`)**
 
 ```python
-# ✅ This works for groundhog (NOT for Modal!)
-import numpy as np
-from ase import Atoms
+# ✅ Recommended for Garden-AI
+import groundhog_hpc as hog  # Module-level required
 
 @hog.function()
 def compute(data):
-    # Can use module-level imports
+    # All other imports inside the function
+    import numpy as np
+    from ase import Atoms
+
     atoms = Atoms(data)
     return np.array(atoms.positions)
 ```
+
+**Note:** All three working examples above follow this pattern - imports are inside functions. This provides consistency with Modal and is the recommended Garden-AI pattern.
+
+Module-level imports (other than `groundhog_hpc as hog`) are *technically* allowed by groundhog but not recommended for Garden-AI code.
 
 ---
 
@@ -486,7 +492,7 @@ result = garden.my_function.remote(
 | Aspect | groundhog_hpc (shown here) | Modal |
 |--------|----------------------------|-------|
 | User calls | `garden.func.remote(args, endpoint="name")` - MUST use .remote() | `garden.func(args)` - NO .remote() |
-| Imports | Module level OK | INSIDE functions only |
+| Imports | Inside functions (recommended for Garden-AI) | INSIDE functions only (required) |
 | Metadata | PEP 723 `# /// script` | `modal.App()` + `image` |
 | Testing | `@hog.harness()` | `@app.local_entrypoint()` |
 | Decorators | `@hog.function()`, `@hog.method()` | `@app.function()`, `@app.cls()` |

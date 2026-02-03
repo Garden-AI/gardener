@@ -12,12 +12,12 @@ Load this file when generating groundhog HPC scripts for Garden-AI publication.
 
 **Every groundhog HPC script MUST have:**
 
-1. ✅ PEP 723 `# /// script` metadata at top
+1. ✅ PEP 723 `# /// script` metadata at top with `requires-python` field
 2. ✅ `[tool.hog.endpoint_name]` configurations for each endpoint
-3. ✅ `import groundhog_hpc as hog`
+3. ✅ `import groundhog_hpc as hog` (exactly this form, at module level)
 4. ✅ All compute functions use `@hog.function()` decorator
 5. ✅ Test functions use `@hog.harness()` decorator
-6. ✅ Imports can be at **module level** (unlike Modal!)
+6. ✅ **All other imports INSIDE functions** (recommended for Garden-AI consistency)
 7. ✅ Type hints and comprehensive docstrings
 
 ---
@@ -163,20 +163,44 @@ globus-compute-endpoint list
 
 ## Critical groundhog-Specific Patterns
 
-### 1. Module-Level Imports Are OK
+### 1. Import Placement
+
+**RECOMMENDED: Put imports inside functions (except `groundhog_hpc as hog`)**
 
 ```python
-# ✅ This works for groundhog (NOT for Modal!)
-import numpy as np
-from ase import Atoms
+# ✅ Recommended for Garden-AI (works for both Modal and groundhog)
+import groundhog_hpc as hog  # Module-level is required
 
 @hog.function()
 def compute(data):
+    # All other imports inside the function
+    import numpy as np
+    from ase import Atoms
+
     atoms = Atoms(data)
     return np.array(atoms.positions)
 ```
 
-**Why different from Modal:** groundhog doesn't serialize functions the same way Modal does.
+**Why this pattern?**
+- Consistent with Modal requirements (easier to port code between platforms)
+- Dependencies only loaded when function executes
+- Cleaner separation of concerns
+- Matches all Garden-AI examples
+
+**Note:** Module-level imports (other than `groundhog_hpc as hog`) are *technically* allowed by groundhog, but NOT recommended for Garden-AI:
+
+```python
+# ⚠️ This works but NOT recommended for Garden-AI:
+import groundhog_hpc as hog
+import numpy as np  # Avoid putting other imports at module level
+from ase import Atoms
+
+@hog.function()
+def compute(data):
+    # Can use module-level imports, but not recommended
+    atoms = Atoms(data)
+    return np.array(atoms.positions)
+```
 
 ### 2. Must Use .remote() with Endpoint
 
@@ -217,6 +241,9 @@ def test_anvil():
 | Mistake | Fix |
 |---------|-----|
 | No PEP 723 metadata | Add `# /// script` block at top |
+| Missing `requires-python` field | Add `# requires-python = ">=3.10"` to metadata |
+| `from groundhog_hpc import hog` | Use `import groundhog_hpc as hog` (exactly) |
+| Module-level imports (other than hog) | Put all other imports inside functions |
 | Missing `@hog.function()` | Decorate all compute functions |
 | No `@hog.harness()` | Add test harness |
 | Using `@app.function()` | Use `@hog.function()` (not Modal's decorator) |
@@ -253,13 +280,20 @@ For advanced use cases, see hpc-examples.md:
 
 Before claiming HPC script is ready:
 
-**Required:**
-- [ ] PEP 723 `# /// script` block with dependencies
+**Metadata:**
+- [ ] PEP 723 `# /// script` block at top
+- [ ] `requires-python = ">=3.10"` field present
+- [ ] All dependencies with versions listed
 - [ ] `[tool.hog.endpoint_name]` section with UUID
-- [ ] `import groundhog_hpc as hog`
+
+**Code Structure:**
+- [ ] `import groundhog_hpc as hog` (NOT `from groundhog_hpc import hog`)
+- [ ] All other imports INSIDE functions (not module-level)
 - [ ] `@hog.function()` on all compute functions
 - [ ] `@hog.harness()` test function showing `.remote()` usage
-- [ ] Type hints on parameters and returns
+- [ ] Type hints on all parameters and returns
+
+**Functionality:**
 - [ ] Batch processing with per-item error handling
 - [ ] Output format: `{"results": [...], "summary": {...}}`
 
