@@ -13,7 +13,7 @@
       "name": "mdf",
       "source": {
         "source": "github",
-        "repo": "Garden-AI/mdf-skill.git"
+        "repo": "Garden-AI/mdf-skill"
       },
       "description": "Publish materials science datasets to the Materials Data Facility (MDF)"
     }
