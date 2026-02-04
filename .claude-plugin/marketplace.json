@@ -8,6 +8,11 @@
       "name": "gardener",
       "source": "./plugins/gardener",
       "description": "Helps write scripts that can be published on Garden-AI"
+    },
+    {
+      "name": "mdf",
+      "source": "https://github.com/Garden-AI/mdf-skill.git",
+      "description": "Publish materials science datasets to the Materials Data Facility (MDF)"
     }
   ]
 }
