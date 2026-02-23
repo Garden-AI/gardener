@@ -73,7 +73,9 @@ digraph publication_workflow {
     "Design API" [shape=box];
     "Choose deployment?" [shape=diamond];
     "Generate code" [shape=box];
-    "Test & guide" [shape=box];
+    "Test & refine" [shape=box];
+    "Deploy function" [shape=box];
+    "Create garden" [shape=box];
 
     "Gather artifacts" -> "Analyze paper";
     "Analyze paper" -> "Explore repository";
@@ -81,7 +83,9 @@ digraph publication_workflow {
     "Understand model" -> "Design API";
     "Design API" -> "Choose deployment?";
     "Choose deployment?" -> "Generate code" [label="Modal or HPC"];
-    "Generate code" -> "Test & guide";
+    "Generate code" -> "Test & refine";
+    "Test & refine" -> "Deploy function" [label="CLI deploy"];
+    "Deploy function" -> "Create garden" [label="CLI create"];
 }
 ```
 
@@ -93,13 +97,18 @@ digraph publication_workflow {
 | 6: Choose | Modal vs HPC decision | workflow-phases.md |
 | 7: Generate | Write Modal app or groundhog script following patterns | modal-pattern.md / hpc-pattern.md |
 | 8: Test & Refine | **ACTIVELY RUN** code, debug errors, fix, repeat until working | workflow-phases.md |
-| 9: Publish | Upload to Garden-AI with metadata | workflow-phases.md |
+| 9: Deploy | Deploy function via CLI: `garden-ai function modal deploy` or `hpc deploy` | cli-reference.md |
+| 10: Publish | Create garden via CLI: `garden-ai garden create` | cli-reference.md |
 
 **Phase 8 is MANDATORY and ACTIVE:**
 - Must execute: `uv run modal run` or `uv run hog run`
-- If it works → Ready for Garden publication
+- If it works → Ready for CLI deployment (Phase 9)
 - If it fails → Debug and fix until it works
 - Cannot skip or assume it works
+
+**Phases 9-10: CLI-Driven Publication:**
+- Phase 9: Deploy function with `garden-ai function modal deploy` or `garden-ai function hpc deploy`
+- Phase 10: Create garden with `garden-ai garden create` including the deployed function IDs
 
 ## How to Use This Skill
 
@@ -108,13 +117,15 @@ digraph publication_workflow {
 3. **Choose deployment**:
    - For Modal: Read modal-pattern.md
    - For HPC: Read hpc-pattern.md
-4. **Complete workflow** - Return to workflow-phases.md for phases 8-9
+4. **Test code (Phase 8)** - Return to workflow-phases.md
+5. **Deploy & Publish (Phases 9-10)** - Use CLI commands from cli-reference.md
 
 **IMPORTANT:** You don't need all files in context at once. Load them as needed:
 - Always load: This file (SKILL.md)
 - Phases 1-6: Load workflow-phases.md
 - Modal generation: Load modal-pattern.md
 - HPC generation: Load hpc-pattern.md
+- CLI deployment/publishing: Load cli-reference.md
 
 ## Red Flags - STOP and Follow Workflow
 
@@ -190,9 +201,10 @@ Before claiming done, verify against checklists in:
 
 ## Supporting Files
 
-- **workflow-phases.md** - Detailed 9-phase publication workflow
+- **workflow-phases.md** - Detailed publication workflow phases 1-8
 - **modal-pattern.md** - Complete Modal app pattern and examples
 - **hpc-pattern.md** - Complete HPC/groundhog pattern and examples
+- **cli-reference.md** - Garden-AI CLI commands for deployment and publication
 
 ## Common Pitfalls
 

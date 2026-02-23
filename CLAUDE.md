@@ -19,29 +19,33 @@ gardener/
 ├── LICENSE
 ├── .claude-plugin/
 │   └── marketplace.json              # Marketplace plugin definition
-└── skills/
+└── plugins/
     └── gardener/
-        ├── .claude-plugin/
-        │   └── plugin.json           # Skill plugin definition (includes /gardener command)
-        ├── SKILL.md                  # Main entry point and overview
-        ├── workflow-phases.md        # Detailed 9-phase workflow instructions
-        ├── modal-pattern.md          # Patterns for generating Modal apps
-        ├── modal-examples.md         # Real-world Modal examples
-        ├── hpc-pattern.md            # Patterns for generating groundhog_hpc scripts
-        ├── hpc-examples.md           # Real-world HPC examples
-        ├── repository-patterns.md    # Guidance for analyzing ML repositories
-        ├── test-baseline-checkpoints.md
-        ├── test-with-checkpoints.md
-        └── README.md                 # Technical skill documentation
+        ├── commands/
+        │   └── gardener.md           # /gardener command definition
+        └── skills/
+            └── gardener/
+                ├── SKILL.md                  # Main entry point and overview
+                ├── workflow-phases.md        # Detailed 10-phase workflow instructions
+                ├── cli-reference.md          # Garden-AI CLI commands for deployment/publication
+                ├── modal-pattern.md          # Patterns for generating Modal apps
+                ├── modal-examples.md         # Real-world Modal examples
+                ├── hpc-pattern.md            # Patterns for generating groundhog_hpc scripts
+                ├── hpc-examples.md           # Real-world HPC examples
+                ├── repository-patterns.md    # Guidance for analyzing ML repositories
+                ├── test-baseline-checkpoints.md
+                ├── test-with-checkpoints.md
+                └── README.md                 # Technical skill documentation
 ```
 
 ### Key Files
 
 - **README.md** (root) - User-facing installation and usage guide for GitHub visitors
 - **CLAUDE.md** (root) - This file, developer guidance for working with the repository
-- **skills/gardener/README.md** - Technical documentation for the skill itself
-- **skills/gardener/SKILL.md** - The skill's main entry point loaded by Claude Code
-- **skills/gardener/plugin.json** - Defines the `/gardener` command users can invoke
+- **plugins/gardener/skills/gardener/README.md** - Technical documentation for the skill itself
+- **plugins/gardener/skills/gardener/SKILL.md** - The skill's main entry point loaded by Claude Code
+- **plugins/gardener/skills/gardener/cli-reference.md** - CLI commands for deployment and publication
+- **plugins/gardener/commands/gardener.md** - Defines the `/gardener` command users can invoke
 
 ### Two README Files
 
@@ -52,7 +56,7 @@ This repository has **two README files** with different purposes:
    - Focus: Installation, usage examples, key features
    - Tone: Welcoming and accessible
 
-2. **`skills/gardener/README.md`** - Technical documentation for the skill
+2. **`plugins/gardener/skills/gardener/README.md`** - Technical documentation for the skill
    - Target audience: Developers working on the skill, Claude Code when loaded
    - Focus: Platform differences, calling conventions, implementation patterns
    - Tone: Precise technical reference
