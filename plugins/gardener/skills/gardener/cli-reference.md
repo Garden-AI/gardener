@@ -64,16 +64,17 @@ garden-ai garden create [OPTIONS]
 | Option | Description |
 |--------|-------------|
 | `-t, --title TEXT` | Title of the garden |
-| `-a, --authors TEXT` | Comma-separated list of authors |
 
 **Optional options:**
 | Option | Description |
 |--------|-------------|
+| `-a, --authors TEXT` | Comma-separated list of authors. If not provided, uses the current user. |
+| `-c, --contributors TEXT` | Comma-separated list of contributors |
 | `-d, --description TEXT` | Description of the garden |
 | `--tags TEXT` | Comma-separated list of tags |
 | `-m, --modal-function-ids TEXT` | Comma-separated Modal function IDs to include |
-| `-g, --hpc-function-ids TEXT` | Comma-separated Groundhog function IDs to include |
-| `--year TEXT` | Publication year |
+| `-g, --hpc-function-ids TEXT` | Comma-separated HPC function IDs to include |
+| `--year TEXT` | Publication year (default: current year) |
 | `--version TEXT` | Garden version (default: 0.0.1) |
 
 **Example - Create garden with deployed functions:**
@@ -172,6 +173,8 @@ garden-ai garden update [OPTIONS] DOI
 
 Update an existing garden's metadata.
 
+**Note:** For list fields (authors, contributors, tags, function IDs), the provided values will REPLACE the entire existing list. To add or remove individual items, first retrieve the current values with `garden show`, modify as needed, then provide the complete new list.
+
 **Arguments:**
 - `DOI` - DOI of the garden to update (required)
 
@@ -179,10 +182,13 @@ Update an existing garden's metadata.
 | Option | Description |
 |--------|-------------|
 | `-t, --title TEXT` | New title |
-| `-a, --authors TEXT` | New comma-separated authors |
+| `-a, --authors TEXT` | Comma-separated list of authors. Replaces the entire authors list. |
+| `-c, --contributors TEXT` | Comma-separated list of contributors. Replaces the entire contributors list. |
 | `-d, --description TEXT` | New description |
-| `--tags TEXT` | New comma-separated tags |
+| `--tags TEXT` | Comma-separated list of tags. Replaces the entire tags list. |
 | `--version TEXT` | New version |
+| `-m, --modal-function-ids TEXT` | Comma-separated Modal function IDs. Replaces the entire list. |
+| `-g, --hpc-function-ids TEXT` | Comma-separated HPC function IDs. Replaces the entire list. |
 
 **Example:**
 ```bash
@@ -206,7 +212,7 @@ Add Modal or HPC functions to an existing garden.
 | Option | Description |
 |--------|-------------|
 | `-m, --modal-function-ids TEXT` | Comma-separated Modal function IDs to add |
-| `-g, --hpc-function-ids TEXT` | Comma-separated Groundhog function IDs to add |
+| `-g, --hpc-function-ids TEXT` | Comma-separated HPC function IDs to add |
 | `--replace` | Replace existing functions instead of adding |
 
 **Examples:**
@@ -244,69 +250,68 @@ garden-ai garden delete "10.26311/my-garden" --force
 
 ## Function Management
 
-Functions are the deployable units that run on Modal (cloud) or HPC systems.
-
-### List All Functions
-
-```bash
-garden-ai function list [OPTIONS]
-```
-
-Shows unified view of Modal and HPC functions with Type column.
-
-**Options:**
-| Option | Description |
-|--------|-------------|
-| `-t, --type [cloud\|hpc]` | Filter by function type |
-| `-n, --limit INTEGER` | Maximum results per type (default: 50) |
-| `--json` | Output as JSON |
-| `--pretty` | Pretty-print JSON |
-
-**Examples:**
-```bash
-# List all your functions
-garden-ai function list
-
-# List only Modal functions
-garden-ai function list -t cloud
-
-# List only HPC functions
-garden-ai function list -t hpc
-```
-
-### Show Function Details
-
-```bash
-garden-ai function show [OPTIONS] FUNCTION_ID
-```
-
-**Arguments:**
-- `FUNCTION_ID` - Function ID (required)
-
-**Options:**
-| Option | Description |
-|--------|-------------|
-| `-t, --type [cloud\|hpc]` | Function type (required) |
-| `-c, --code` | Show function code |
-| `--json` | Output as JSON |
-| `--pretty` | Pretty-print JSON |
-
-**Example:**
-```bash
-garden-ai function show my-func-id -t cloud --code
-
-# Get JSON output
-garden-ai function show my-func-id -t cloud --json --pretty
-```
+Functions are the deployable units that run on Modal (cloud) or HPC systems. Use the `modal` or `hpc` subcommands to manage each type.
 
 ---
 
 ## Modal Function Management
 
+### List Modal Functions
+
+```bash
+garden-ai function modal list [OPTIONS]
+```
+
+**Options:**
+| Option | Description |
+|--------|-------------|
+| `-n, --limit INTEGER` | Maximum results (default: 50) |
+| `--json` | Output as JSON |
+| `--pretty` | Pretty-print JSON |
+
+### Show Modal Function Details
+
+```bash
+garden-ai function modal show [OPTIONS] FUNCTION_ID
+```
+
+**Arguments:**
+- `FUNCTION_ID` - Modal function ID (required)
+
+**Options:**
+| Option | Description |
+|--------|-------------|
+| `-c, --code` | Show function code |
+| `--json` | Output as JSON |
+| `--pretty` | Pretty-print JSON |
+
+### Update Modal Function Metadata
+
+```bash
+garden-ai function modal update [OPTIONS] FUNCTION_ID
+```
+
+**Arguments:**
+- `FUNCTION_ID` - Modal function ID (required)
+
+**Options:**
+| Option | Description |
+|--------|-------------|
+| `-t, --title TEXT` | New title |
+| `-d, --description TEXT` | New description |
+| `-a, --authors TEXT` | New comma-separated authors |
+| `--tags TEXT` | New comma-separated tags |
+
+---
+
+## Modal App Management
+
+Modal apps contain one or more functions and are deployed as a unit.
+
 ### Deploy Modal App
 
 ```bash
-garden-ai function modal deploy [OPTIONS] FILE
+garden-ai function modal app deploy [OPTIONS] FILE
 ```
 
 Deploy a Modal app from a Python file.
@@ -328,7 +333,7 @@ Deploy a Modal app from a Python file.
 
 **Example:**
 ```bash
-garden-ai function modal deploy my_app.py \
+garden-ai function modal app deploy my_app.py \
   -t "Structure Relaxation with MACE" \
   -a "Jane Doe, John Smith" \
   --tags "materials-science,MACE"
@@ -343,7 +348,7 @@ garden-ai function modal deploy my_app.py \
 ### List Modal Apps
 
 ```bash
-garden-ai function modal list [OPTIONS]
+garden-ai function modal app list [OPTIONS]
 ```
 
 **Options:**
@@ -355,7 +360,7 @@ garden-ai function modal list [OPTIONS]
 ### Show Modal App Details
 
 ```bash
-garden-ai function modal show [OPTIONS] APP_ID
+garden-ai function modal app show [OPTIONS] APP_ID
 ```
 
 **Arguments:**
@@ -365,30 +370,14 @@ garden-ai function modal show [OPTIONS] APP_ID
 | Option | Description |
 |--------|-------------|
 | `-c, --code` | Show file contents |
+| `--show-app-text` | Show the app_text field (deployed code) |
 | `--json` | Output as JSON |
 | `--pretty` | Pretty-print JSON |
-
-### Update Modal Function Metadata
-
-```bash
-garden-ai function modal update [OPTIONS] FUNCTION_ID
-```
-
-**Arguments:**
-- `FUNCTION_ID` - Modal function ID (required)
-
-**Options:**
-| Option | Description |
-|--------|-------------|
-| `-t, --title TEXT` | New title |
-| `-d, --description TEXT` | New description |
-| `-a, --authors TEXT` | New comma-separated authors |
-| `--tags TEXT` | New comma-separated tags |
 
 ### Delete Modal App
 
 ```bash
-garden-ai function modal delete [OPTIONS] APP_ID
+garden-ai function modal app delete [OPTIONS] APP_ID
 ```
 
 **Arguments:**
@@ -403,13 +392,13 @@ garden-ai function modal delete [OPTIONS] APP_ID
 
 ## HPC Function Management
 
-### Deploy Groundhog Function
+### Deploy HPC Function
 
 ```bash
 garden-ai function hpc deploy [OPTIONS] FILE
 ```
 
-Deploy a Groundhog function from a Python file.
+Deploy an HPC function from a Python file.
 
 **Arguments:**
 - `FILE` - Path to Python file with function (required)
@@ -499,7 +488,7 @@ garden-ai function hpc delete [OPTIONS] FUNCTION_ID
 
 ## HPC Endpoint Management
 
-Groundhog endpoints are registered Globus Compute endpoints for running HPC functions.
+HPC endpoints are registered Globus Compute endpoints for running HPC functions.
 
 ### Create Endpoint
 
@@ -507,7 +496,7 @@ Groundhog endpoints are registered Globus Compute endpoints for running HPC func
 garden-ai function hpc endpoint create [OPTIONS]
 ```
 
-Register a new Groundhog endpoint.
+Register a new HPC endpoint.
 
 **Options:**
 | Option | Description |
@@ -548,7 +537,7 @@ garden-ai function hpc endpoint show [OPTIONS] ENDPOINT_ID
 | Option | Description |
 |--------|-------------|
 | `--json` | Output as JSON |
-| `--pretty` | Pretty-print JSON |
+| `--pretty` | Pretty-print JSON output |
 
 ### Update Endpoint
 
@@ -629,8 +618,8 @@ garden-ai whoami
 # 2. Test the Modal app locally first
 uv run modal run my_app.py
 
-# 3. Deploy the function to Garden
-garden-ai function modal deploy my_app.py \
+# 3. Deploy the app to Garden
+garden-ai function modal app deploy my_app.py \
   -t "Protein Binding Affinity Prediction" \
   -a "Jane Doe, John Smith" \
   --tags "drug-discovery,binding-affinity"
@@ -717,16 +706,22 @@ client = GardenClient()
 # Get the garden by DOI
 garden = client.get_garden("10.26311/garden-xyz789")
 
-# Test Modal function (direct call, no .remote())
+# Test Modal function (direct call)
 result = garden.predict_binding_affinity(molecules=["CCO", "CCCO"])
 print(f"Result: {result}")
 
-# Test HPC function (requires .remote() with endpoint)
-result = garden.relax_structures.remote(
-    structures=[...],
-    endpoint="polaris"
-)
-print(f"Result: {result}")
+# Test HPC function (async via submit/poll pattern)
+job_id = garden.relax_structures.submit(structures=[...])
+print(f"Submitted job: {job_id}")
+
+# Poll for completion
+status = garden.get_job_status(job_id)
+print(f"Status: {status.status}")  # "pending", "running", "completed", etc.
+
+# Retrieve results when complete
+if status.status == "completed":
+    results = garden.get_results(job_id)
+    print(f"Results: {results}")
 ```
 
 ### Quick Verification Script
@@ -747,19 +742,15 @@ def main():
 
     # List available functions
     print(f"Garden: {garden.metadata.title}")
-    print(f"Functions: {[f.name for f in garden.functions]}")
+    print(f"Modal functions: {[f.name for f in garden.modal_functions]}")
 
-    # Test first function
-    func = garden.functions[0]
-    print(f"\nTesting: {func.name}")
+    # Test first Modal function
+    if garden.modal_functions:
+        func = garden.modal_functions[0]
+        print(f"\nTesting Modal function: {func.name}")
+        result = getattr(garden, func.name)(TEST_INPUT)
+        print(f"Result: {result}")
 
-    # For Modal functions
-    result = getattr(garden, func.name)(TEST_INPUT)
-
-    # For HPC functions, use:
-    # result = getattr(garden, func.name).remote(TEST_INPUT, endpoint="your-endpoint")
-
-    print(f"Result: {result}")
     print("\n✅ Deployment verified!")
 
 if __name__ == "__main__":
