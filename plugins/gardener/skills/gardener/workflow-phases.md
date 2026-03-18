@@ -2,7 +2,9 @@
 
 **Referenced from:** SKILL.md
 
-This file contains detailed instructions for the 9-phase publication workflow. Load this file when working through phases 1-6 and 8-9.
+This file contains detailed instructions for the 10-phase publication workflow. Load this file when working through phases 1-8.
+
+**For CLI deployment and publication (Phases 9-10):** Also load cli-reference.md for complete command reference.
 
 ---
 
@@ -311,8 +313,9 @@ image = modal.Image.debian_slim(python_version="3.11").pip_install(
 | 5. Design API | User approves API design | ✅ CHECKPOINT 3 |
 | 6. Choose deployment | User confirms deployment target | ✅ CHECKPOINT 4 |
 | 7. Generate code | User reviews and approves code | ✅ CHECKPOINT 5 |
-| 8. Create test harness | Test runs with realistic examples | - |
-| 9. Guide publication | User knows next steps | - |
+| 8. Test & refine | Code runs successfully with correct output | - |
+| 9. Deploy function | Function deployed via CLI, user confirms | ✅ CHECKPOINT 6 |
+| 10. Create garden | Garden created with DOI, user has usage instructions | - |
 
 **IMPORTANT:** All checkpoints are MANDATORY. Use AskUserQuestion at each checkpoint to get user validation before proceeding.
 
@@ -1292,56 +1295,211 @@ Should I try option [X], or do you have other suggestions?
 
 ---
 
-## Phase 9: Guide Publication
+## Phase 9: Deploy Function via CLI
 
-**Goal:** Provide clear next steps for Garden-AI upload.
+**Goal:** Deploy the tested function to Garden-AI infrastructure using the CLI.
 
 **PREREQUISITE: Code must be tested and working (Phase 8 complete).**
 
-**Provide instructions:**
+**For detailed CLI reference, load:** cli-reference.md
 
-1. **Upload to Garden-AI:**
-   - **Web UI (recommended):** Upload file at garden.thegardens.ai
-   - **CLI:** Use `garden-ai` command (if user prefers)
+---
 
-2. **Add metadata:**
-   - Title (descriptive, includes model name)
-   - Description (explain scientific purpose, cite paper)
-   - Authors (paper authors)
-   - Paper DOI or arXiv ID
-   - Tags (domain, task type, methods)
-   - Year
+### Step 1: Verify Authentication
 
-5. **Publish and share:**
-   - Creates citable DOI for the function
-   - Sharable with research community
-   - Usable via Python SDK
-
-**Example user instructions:**
+```bash
+garden-ai whoami
 ```
-To publish this on Garden-AI:
 
-1. Test it works:
-   modal run binding_affinity_app.py
-
-2. Upload via web UI:
-   https://garden.thegardens.ai
-
-3. Fill in metadata:
-   Title: "Protein-Ligand Binding Affinity Prediction (Smith et al. 2024)"
-   Description: "Fast binding affinity prediction using composition-based features.
-                Based on the method described in Smith et al., Nature 2024."
-   DOI: 10.1038/s41586-024-xxxxx
-   Tags: drug-discovery, binding-affinity, virtual-screening
-
-4. Your function will be available at:
-   garden_ai.get_function("your-doi")
+If not logged in:
+```bash
+garden-ai login
 ```
+
+---
+
+### Step 2: Deploy the Function
+
+**For Modal apps:**
+```bash
+garden-ai function modal deploy <FILE> [OPTIONS]
+```
+
+**Example:**
+```bash
+garden-ai function modal deploy binding_affinity_app.py \
+  -t "Protein-Ligand Binding Affinity Prediction" \
+  -a "Jane Doe, John Smith" \
+  --tags "drug-discovery,binding-affinity,virtual-screening"
+```
+
+**For HPC/Groundhog functions:**
+```bash
+garden-ai function hpc deploy <FILE> [OPTIONS]
+```
+
+**Example:**
+```bash
+garden-ai function hpc deploy structure_relaxation.py \
+  -t "Structure Relaxation with MACE" \
+  -e "polaris-endpoint-id,anvil-endpoint-id" \
+  -a "Jane Doe, John Smith" \
+  --tags "materials-science,MACE,relaxation"
+```
+
+---
+
+### Step 3: Capture Function ID
+
+The deploy command outputs a function ID. **Save this for Phase 10.**
+
+```
+✓ Function deployed successfully
+Function ID: modal-func-abc123
+```
+
+---
+
+### Step 4: Verify Deployment
+
+```bash
+# For Modal
+garden-ai function modal show <APP_ID>
+
+# For HPC
+garden-ai function hpc show <FUNCTION_ID>
+```
+
+Verify:
+- Function name matches expected
+- Metadata (title, authors, tags) is correct
+- No deployment errors
+
+---
+
+### CHECKPOINT 6: Confirm Deployment (MANDATORY)
+
+**Present deployment results:**
+```
+Function deployed successfully:
+- Function ID: [ID]
+- Title: [Title]
+- Authors: [Authors]
+- Tags: [Tags]
+
+The function is now deployed and ready to be added to a Garden.
+Should I proceed to create a Garden with this function?
+```
+
+**Use AskUserQuestion to confirm** before proceeding to Phase 10.
+
+---
+
+## Phase 10: Create Garden
+
+**Goal:** Create a Garden containing the deployed function(s) and obtain citable DOI.
+
+---
+
+### Step 1: Create the Garden
+
+```bash
+garden-ai garden create [OPTIONS]
+```
+
+**Required options:**
+- `-t, --title TEXT` - Garden title
+- `-a, --authors TEXT` - Comma-separated authors
+
+**Include function IDs:**
+- `-m, --modal-function-ids TEXT` - For Modal functions
+- `-g, --hpc-function-ids TEXT` - For HPC functions
+
+**Example:**
+```bash
+garden-ai garden create \
+  -t "Drug Discovery ML Models (Smith et al. 2024)" \
+  -a "Jane Doe, John Smith" \
+  -d "Machine learning models for drug discovery workflows based on Smith et al., Nature 2024. DOI: 10.1038/s41586-024-xxxxx" \
+  --tags "drug-discovery,binding-affinity,virtual-screening" \
+  -m "modal-func-abc123" \
+  --year 2025
+```
+
+---
+
+### Step 2: Capture Garden DOI
+
+The create command outputs a DOI:
+```
+✓ Garden created successfully
+Garden DOI: 10.26311/garden-xyz789
+```
+
+---
+
+### Step 3: Verify Garden
+
+```bash
+garden-ai garden show "10.26311/garden-xyz789"
+```
+
+Verify:
+- All functions are listed
+- Metadata is correct
+- DOI is valid
+
+---
+
+### Step 4: Provide Usage Instructions
+
+**Present the final result to user:**
+
+```
+✅ Garden published successfully!
+
+Garden DOI: 10.26311/garden-xyz789
+URL: https://thegardens.ai/gardens/10.26311/garden-xyz789
+
+To use this garden in Python:
+
+from garden_ai import GardenClient
+
+client = GardenClient()
+garden = client.get_garden("10.26311/garden-xyz789")
+
+# Call your function
+result = garden.predict_binding_affinity(molecules=["CCO", "CCCO"])
+
+Citation:
+Jane Doe, John Smith. (2025). Drug Discovery ML Models (Smith et al. 2024).
+Garden-AI. DOI: 10.26311/garden-xyz789
+```
+
+---
+
+### Optional: Update Garden Later
+
+If you need to add more functions or update metadata:
+
+```bash
+# Add functions to existing garden
+garden-ai garden add-functions "10.26311/garden-xyz789" \
+  -m "new-modal-func-id"
+
+# Update metadata
+garden-ai garden update "10.26311/garden-xyz789" \
+  -d "Updated description with more details"
+```
+
+---
 
 **Red flags:**
-- "Just upload it"
-- "User knows what to do"
-- "Test it after publishing"
+- "Just upload it" (use the CLI workflow)
+- "User knows what to do" (guide them through)
+- "Test it after publishing" (testing happens in Phase 8)
+- Skipping deployment verification
+- Not providing usage instructions
 
 ---
 
@@ -1358,7 +1516,10 @@ Before claiming workflow is complete:
 - [ ] Chose appropriate deployment target (Modal vs HPC)
 - [ ] API matches what paper/code actually does
 - [ ] Test harness uses realistic examples from paper/repo
-- [ ] Provided clear publication guidance
+- [ ] Code tested successfully with `uv run modal run` or `uv run hog run`
+- [ ] Function deployed via CLI (`garden-ai function modal/hpc deploy`)
+- [ ] Garden created via CLI (`garden-ai garden create`)
+- [ ] User has DOI and usage instructions
 
 **Pattern compliance:**
 - [ ] Checked against modal-pattern.md OR hpc-pattern.md
@@ -1367,10 +1528,29 @@ Before claiming workflow is complete:
 - [ ] Preprocessing matches source code
 - [ ] Outputs are scientifically accurate
 
+**CLI deployment compliance:**
+- [ ] Checked against cli-reference.md
+- [ ] Authentication verified (`garden-ai whoami`)
+- [ ] Function deployed with correct metadata
+- [ ] Garden created with function IDs
+- [ ] DOI captured and shared with user
+
 ---
 
 ## Summary
 
 Follow these phases in order. Don't skip ahead. Each phase builds on the previous one to ensure scientifically accurate, usable Garden-AI functions.
 
-When you need code generation patterns, load modal-pattern.md or hpc-pattern.md.
+**Supporting files to load:**
+- Code generation patterns: modal-pattern.md or hpc-pattern.md
+- CLI deployment and publication: cli-reference.md
+
+**The full agent-driven publication flow:**
+1. Understand the science (Phases 1-4)
+2. Design the API (Phase 5)
+3. Choose and generate code (Phases 6-7)
+4. Test until it works (Phase 8)
+5. Deploy function via CLI (Phase 9)
+6. Create garden via CLI (Phase 10)
+
+The result: A citable DOI for the published function that scientists can discover and use via the Garden-AI SDK.
