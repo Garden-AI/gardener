@@ -1,5 +1,4 @@
 ---
-name: modal-pattern
 description: Modal app code patterns for Garden-AI - imports inside functions, @app.function decorators, image definitions, apt_install for system packages
 ---
 

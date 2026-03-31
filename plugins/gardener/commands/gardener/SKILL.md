@@ -16,32 +16,29 @@ $ARGUMENTS
 
 **STOP. You MUST follow this workflow. Do NOT skip ahead to writing code.**
 
-**Your first action** must be to load the workflow skill using the Skill tool:
-```
-Load skill: gardener:workflow-phases
-```
+Follow these phases IN ORDER:
 
-Then follow these phases IN ORDER:
-
-1. **Phase 1-5: Understand** - Gather artifacts, analyze paper, explore repo, synthesize, design API
-2. **Phase 6: Choose platform** - Modal vs groundhog_hpc decision
-3. **Phase 7: Generate code** - Load the pattern skill FIRST:
-   - Modal: Load skill `gardener:modal-pattern`
-   - HPC: Load skill `gardener:hpc-pattern`
-4. **Phase 8: Test** - Actually RUN the code with `uv run modal run` or `uv run hog run`
-5. **Phase 9-10: Deploy & Publish** - Load skill `gardener:cli-reference` for CLI commands
+1. **Phase 1-2: Gather & Analyze** - Get paper PDF and repo URL, understand the science
+2. **Phase 3-4: Explore & Synthesize** - Find inference code, understand inputs/outputs
+3. **Phase 5: Design API** - Create domain-scientist-friendly function signatures
+4. **Phase 6: Choose platform** - Modal (fast, serverless) vs groundhog_hpc (long, HPC)
+5. **Phase 7: Generate code** - Follow the Modal or HPC patterns below
+6. **Phase 8: Test** - Actually RUN the code with `uv run modal run` or `uv run hog run`
+7. **Phase 9-10: Deploy & Publish** - Use `garden-ai` CLI commands
 
 **DO NOT:**
-- Skip loading the workflow-phases skill
-- Write code before completing phases 1-6
-- Generate Modal/HPC code without loading the pattern skill first
+- Write code before understanding the model (phases 1-5)
+- Generate code without following the patterns in this file
 - Claim "done" without running the code
+- Skip checkpoints with the user
 
-**DO:**
-- Load gardener:workflow-phases skill NOW before proceeding
-- Follow each phase and checkpoint
-- Ask the user questions at each checkpoint
-- Load the appropriate pattern skill before generating code
+**CHECKPOINTS (use AskUserQuestion):**
+- After Phase 2: Validate paper understanding
+- After Phase 4: Confirm model behavior synthesis
+- After Phase 5: Approve API design
+- After Phase 6: Confirm platform choice
+- After Phase 7: Review generated code
+- After Phase 9: Confirm deployment
 
 ---
 

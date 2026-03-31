@@ -1,5 +1,4 @@
 ---
-name: workflow-phases
 description: Detailed 10-phase Garden-AI publication workflow with checkpoints and validation steps
 ---
 
