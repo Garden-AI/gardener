@@ -1,3 +1,8 @@
+---
+name: cli-reference
+description: Garden-AI CLI commands for deploying functions and creating gardens - garden-ai function modal deploy, garden-ai garden create, authentication
+---
+
 # Garden-AI CLI Reference
 
 **Referenced from:** SKILL.md, workflow-phases.md

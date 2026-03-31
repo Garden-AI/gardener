@@ -1,3 +1,8 @@
+---
+name: hpc-pattern
+description: Groundhog HPC script patterns for Garden-AI - PEP 723 metadata, @hog.function decorators, endpoint configuration, .remote() calling convention
+---
+
 # Groundhog HPC Pattern for Garden-AI
 
 **Referenced from:** SKILL.md (Phase 7: Generate Code)

@@ -1,11 +1,17 @@
 {
   "name": "gardener",
   "description": "Helps you write scripts that can be published on Garden-AI",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "author": {
     "name": "Hayden Holbrook"
   },
   "commands": ["./commands/gardener/SKILL.md"],
+  "skills": [
+    "./skills/workflow-phases/SKILL.md",
+    "./skills/modal-pattern/SKILL.md",
+    "./skills/hpc-pattern/SKILL.md",
+    "./skills/cli-reference/SKILL.md"
+  ],
   "keywords": [
     "garden",
     "garden-ai",

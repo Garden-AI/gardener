@@ -16,32 +16,32 @@ $ARGUMENTS
 
 **STOP. You MUST follow this workflow. Do NOT skip ahead to writing code.**
 
-**Your first action** must be to read the workflow file:
+**Your first action** must be to load the workflow skill using the Skill tool:
 ```
-Read file: ${CLAUDE_SKILL_DIR}/workflow-phases.md
+Load skill: gardener:workflow-phases
 ```
 
 Then follow these phases IN ORDER:
 
 1. **Phase 1-5: Understand** - Gather artifacts, analyze paper, explore repo, synthesize, design API
 2. **Phase 6: Choose platform** - Modal vs groundhog_hpc decision
-3. **Phase 7: Generate code** - Read the pattern file FIRST:
-   - Modal: `${CLAUDE_SKILL_DIR}/modal-pattern.md`
-   - HPC: `${CLAUDE_SKILL_DIR}/hpc-pattern.md`
+3. **Phase 7: Generate code** - Load the pattern skill FIRST:
+   - Modal: Load skill `gardener:modal-pattern`
+   - HPC: Load skill `gardener:hpc-pattern`
 4. **Phase 8: Test** - Actually RUN the code with `uv run modal run` or `uv run hog run`
-5. **Phase 9-10: Deploy & Publish** - Use CLI commands from `${CLAUDE_SKILL_DIR}/cli-reference.md`
+5. **Phase 9-10: Deploy & Publish** - Load skill `gardener:cli-reference` for CLI commands
 
 **DO NOT:**
-- Skip reading workflow-phases.md
+- Skip loading the workflow-phases skill
 - Write code before completing phases 1-6
-- Generate Modal/HPC code without reading the pattern file first
+- Generate Modal/HPC code without loading the pattern skill first
 - Claim "done" without running the code
 
 **DO:**
-- Read workflow-phases.md NOW before proceeding
+- Load gardener:workflow-phases skill NOW before proceeding
 - Follow each phase and checkpoint
 - Ask the user questions at each checkpoint
-- Read the appropriate pattern file before generating code
+- Load the appropriate pattern skill before generating code
 
 ---
 
@@ -131,14 +131,14 @@ digraph publication_workflow {
 
 **Quick Reference:**
 
-| Phase | Key Actions | Supporting File |
-|-------|-------------|-----------------|
-| 1-5: Understand | Gather, analyze, explore, synthesize, design API | workflow-phases.md |
-| 6: Choose | Modal vs HPC decision | workflow-phases.md |
-| 7: Generate | Write Modal app or groundhog script following patterns | modal-pattern.md / hpc-pattern.md |
-| 8: Test & Refine | **ACTIVELY RUN** code, debug errors, fix, repeat until working | workflow-phases.md |
-| 9: Deploy | Deploy function via CLI: `garden-ai function modal deploy` or `hpc deploy` | cli-reference.md |
-| 10: Publish | Create garden via CLI: `garden-ai garden create` | cli-reference.md |
+| Phase | Key Actions | Supporting Skill |
+|-------|-------------|------------------|
+| 1-5: Understand | Gather, analyze, explore, synthesize, design API | `gardener:workflow-phases` |
+| 6: Choose | Modal vs HPC decision | `gardener:workflow-phases` |
+| 7: Generate | Write Modal app or groundhog script following patterns | `gardener:modal-pattern` / `gardener:hpc-pattern` |
+| 8: Test & Refine | **ACTIVELY RUN** code, debug errors, fix, repeat until working | `gardener:workflow-phases` |
+| 9: Deploy | Deploy function via CLI: `garden-ai function modal deploy` or `hpc deploy` | `gardener:cli-reference` |
+| 10: Publish | Create garden via CLI: `garden-ai garden create` | `gardener:cli-reference` |
 
 **Phase 8 is MANDATORY and ACTIVE:**
 - Must execute: `uv run modal run` or `uv run hog run`
@@ -153,23 +153,23 @@ digraph publication_workflow {
 ## How to Use This Skill
 
 1. **Start here** - Read this file to understand the workflow
-2. **Follow phases 1-6** - Read workflow-phases.md for detailed guidance
+2. **Follow phases 1-6** - Load `gardener:workflow-phases` skill for detailed guidance
 3. **Choose deployment**:
-   - For Modal: Read modal-pattern.md
-   - For HPC: Read hpc-pattern.md
-4. **Test code (Phase 8)** - Return to workflow-phases.md
-5. **Deploy & Publish (Phases 9-10)** - Use CLI commands from cli-reference.md
+   - For Modal: Load `gardener:modal-pattern` skill
+   - For HPC: Load `gardener:hpc-pattern` skill
+4. **Test code (Phase 8)** - Follow testing instructions from workflow-phases
+5. **Deploy & Publish (Phases 9-10)** - Load `gardener:cli-reference` skill for CLI commands
 
-**IMPORTANT:** You don't need all files in context at once. Load them as needed:
+**IMPORTANT:** You don't need all skills in context at once. Load them as needed using the Skill tool:
 - Always load: This file (SKILL.md)
-- Phases 1-6: Load workflow-phases.md
-- Modal generation: Load modal-pattern.md
-- HPC generation: Load hpc-pattern.md
-- CLI deployment/publishing: Load cli-reference.md
+- Phases 1-6: `gardener:workflow-phases`
+- Modal generation: `gardener:modal-pattern`
+- HPC generation: `gardener:hpc-pattern`
+- CLI deployment/publishing: `gardener:cli-reference`
 
 ## Red Flags - STOP and Follow Workflow
 
-**Checkpoint violations (check workflow-phases.md):**
+**Checkpoint violations (check gardener:workflow-phases skill):**
 - "I'll just move to the next phase"
 - "User understands, no need to confirm"
 - "This is obviously correct"
@@ -177,21 +177,21 @@ digraph publication_workflow {
 - "I'll check with user if there are problems"
 - "Checkpoints are optional for simple models"
 
-**Workflow shortcuts (check workflow-phases.md):**
+**Workflow shortcuts (check gardener:workflow-phases skill):**
 - "I can skip reading the paper"
 - "I know what this model does"
 - "Standard ML API will work"
 - "User can figure out the API"
 - "Just make it work quickly"
 
-**Code violations (check pattern files):**
+**Code violations (check pattern skills):**
 - "Imports at top are cleaner"
 - "User will add metadata later"
 - "This works without decorators"
 - "Time is tight, skip the boilerplate"
 - "Ready to publish" (before verification)
 
-**Testing violations (check Phase 8 in workflow-phases.md):**
+**Testing violations (check Phase 8 in gardener:workflow-phases skill):**
 - "I wrote tests but won't run them"
 - "It should work without testing"
 - "User can test it themselves"
@@ -204,8 +204,8 @@ digraph publication_workflow {
 ## Verification Checklist
 
 Before claiming done, verify against checklists in:
-- workflow-phases.md (phases completed)
-- modal-pattern.md or hpc-pattern.md (code patterns)
+- `gardener:workflow-phases` skill (phases completed)
+- `gardener:modal-pattern` or `gardener:hpc-pattern` skill (code patterns)
 
 ## Real-World Impact
 
@@ -239,12 +239,14 @@ Before claiming done, verify against checklists in:
 - User has HPC allocations
 - Example: DFT calculations, MD simulations, structure optimization
 
-## Supporting Files
+## Supporting Skills
 
-- **workflow-phases.md** - Detailed publication workflow phases 1-8
-- **modal-pattern.md** - Complete Modal app pattern and examples
-- **hpc-pattern.md** - Complete HPC/groundhog pattern and examples
-- **cli-reference.md** - Garden-AI CLI commands for deployment and publication
+Load these skills using the Skill tool as needed:
+
+- **gardener:workflow-phases** - Detailed publication workflow phases 1-10 with checkpoints
+- **gardener:modal-pattern** - Complete Modal app pattern, imports inside functions, @app.function decorators
+- **gardener:hpc-pattern** - Complete HPC/groundhog pattern, PEP 723 metadata, @hog.function decorators
+- **gardener:cli-reference** - Garden-AI CLI commands for deployment and publication
 
 ## Common Pitfalls
 
