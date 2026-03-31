@@ -21,11 +21,11 @@ gardener/
 │   └── marketplace.json              # Marketplace plugin definition
 └── plugins/
     └── gardener/
-        ├── commands/
-        │   └── gardener.md           # /gardener command definition
-        └── skills/
+        ├── .claude-plugin/
+        │   └── plugin.json           # Plugin configuration
+        └── commands/
             └── gardener/
-                ├── SKILL.md                  # Main entry point and overview
+                ├── SKILL.md                  # Main entry point - creates /gardener command
                 ├── workflow-phases.md        # Detailed 10-phase workflow instructions
                 ├── cli-reference.md          # Garden-AI CLI commands for deployment/publication
                 ├── modal-pattern.md          # Patterns for generating Modal apps
@@ -42,10 +42,9 @@ gardener/
 
 - **README.md** (root) - User-facing installation and usage guide for GitHub visitors
 - **CLAUDE.md** (root) - This file, developer guidance for working with the repository
-- **plugins/gardener/skills/gardener/README.md** - Technical documentation for the skill itself
-- **plugins/gardener/skills/gardener/SKILL.md** - The skill's main entry point loaded by Claude Code
-- **plugins/gardener/skills/gardener/cli-reference.md** - CLI commands for deployment and publication
-- **plugins/gardener/commands/gardener.md** - Defines the `/gardener` command users can invoke
+- **plugins/gardener/commands/gardener/SKILL.md** - The skill's main entry point, creates `/gardener` command
+- **plugins/gardener/commands/gardener/cli-reference.md** - CLI commands for deployment and publication
+- **plugins/gardener/commands/gardener/README.md** - Technical documentation for the skill itself
 
 ### Two README Files
 
@@ -56,7 +55,7 @@ This repository has **two README files** with different purposes:
    - Focus: Installation, usage examples, key features
    - Tone: Welcoming and accessible
 
-2. **`plugins/gardener/skills/gardener/README.md`** - Technical documentation for the skill
+2. **`plugins/gardener/commands/gardener/README.md`** - Technical documentation for the skill
    - Target audience: Developers working on the skill, Claude Code when loaded
    - Focus: Platform differences, calling conventions, implementation patterns
    - Tone: Precise technical reference
@@ -76,11 +75,11 @@ Once installed, they can invoke the skill with `/gardener` or by mentioning "hel
 
 ### No Build/Test Commands
 
-This repository has no code to compile, test, or run. The "deliverable" is the skill definition itself (markdown files in `skills/gardener/`).
+This repository has no code to compile, test, or run. The "deliverable" is the skill definition itself (markdown files in `commands/gardener/`).
 
 ### Making Changes to the Skill
 
-When modifying skill files in `skills/gardener/`:
+When modifying skill files in `commands/gardener/`:
 
 1. **Consider file dependencies** - Files reference each other (e.g., `SKILL.md` references the pattern files)
 2. **Maintain consistency** - If you update patterns in one file, check if other files need updates
@@ -92,7 +91,7 @@ When modifying skill files in `skills/gardener/`:
 The skill files are comprehensive (1400+ lines total). When the skill is invoked (via `/gardener` command or natural language):
 - It should load files **contextually** based on what phase/task it's working on
 - Don't load everything at once - files reference when to load supporting documentation
-- Follow the loading guidance in `skills/gardener/SKILL.md`
+- Follow the loading guidance in `commands/gardener/SKILL.md`
 
 ## Architecture Principles
 
@@ -162,7 +161,7 @@ When the skill claims to be "done" with a user's request:
 
 - Has it actually **tested the generated code** (not just written it)?
 - Did it **validate at all checkpoints** with AskUserQuestion?
-- Does the generated code follow the patterns in `skills/gardener/modal-pattern.md` or `skills/gardener/hpc-pattern.md`?
+- Does the generated code follow the patterns in `commands/gardener/modal-pattern.md` or `commands/gardener/hpc-pattern.md`?
 - Are the calling conventions correct for the platform?
 
 The skill should produce **working, tested code** that follows Garden-AI conventions, not just syntactically correct Python.

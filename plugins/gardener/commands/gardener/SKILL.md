@@ -1,9 +1,49 @@
 ---
 name: gardener
 description: Use when helping researchers publish scientific ML models on Garden-AI, especially when analyzing research papers and code repositories to design and generate Modal apps or groundhog_hpc scripts for model inference and computational workflows
+argument-hint: "[paper/repo URL or description of what to publish]"
 ---
 
 # Gardener: End-to-End Garden-AI Publication
+
+## User's Request
+
+$ARGUMENTS
+
+---
+
+## MANDATORY: Follow This Workflow
+
+**STOP. You MUST follow this workflow. Do NOT skip ahead to writing code.**
+
+**Your first action** must be to read the workflow file:
+```
+Read file: ${CLAUDE_SKILL_DIR}/workflow-phases.md
+```
+
+Then follow these phases IN ORDER:
+
+1. **Phase 1-5: Understand** - Gather artifacts, analyze paper, explore repo, synthesize, design API
+2. **Phase 6: Choose platform** - Modal vs groundhog_hpc decision
+3. **Phase 7: Generate code** - Read the pattern file FIRST:
+   - Modal: `${CLAUDE_SKILL_DIR}/modal-pattern.md`
+   - HPC: `${CLAUDE_SKILL_DIR}/hpc-pattern.md`
+4. **Phase 8: Test** - Actually RUN the code with `uv run modal run` or `uv run hog run`
+5. **Phase 9-10: Deploy & Publish** - Use CLI commands from `${CLAUDE_SKILL_DIR}/cli-reference.md`
+
+**DO NOT:**
+- Skip reading workflow-phases.md
+- Write code before completing phases 1-6
+- Generate Modal/HPC code without reading the pattern file first
+- Claim "done" without running the code
+
+**DO:**
+- Read workflow-phases.md NOW before proceeding
+- Follow each phase and checkpoint
+- Ask the user questions at each checkpoint
+- Read the appropriate pattern file before generating code
+
+---
 
 ## Overview
 
